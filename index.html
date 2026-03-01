@@ -970,8 +970,9 @@ function nav(page){
 function stab(btn,pid){
   var par=btn.closest('.tabs');if(!par)return;
   par.querySelectorAll('.tbn').forEach(function(b){b.classList.remove('act');});btn.classList.add('act');
-  var nx=par.nextElementSibling;
-  if(nx)nx.querySelectorAll('.tpanel').forEach(function(p){p.classList.remove('act');});
+  // Find the parent container and hide ALL tpanels inside it
+  var container=par.parentElement;
+  if(container)container.querySelectorAll('.tpanel').forEach(function(p){p.classList.remove('act');});
   var tp=document.getElementById(pid);if(tp)tp.classList.add('act');
 }
 
