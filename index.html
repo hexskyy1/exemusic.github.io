@@ -388,6 +388,26 @@ tr:hover td{background:rgba(255,255,255,.01)}
     </div>
   </div>
 </div>
+<div class="modal" id="moTicketSuccess">
+  <div class="mdl">
+    <div class="mhdr"><div class="mtitle">✅ Ticket Dikirim!</div><button class="mcls" onclick="cm('moTicketSuccess')">✕</button></div>
+    <div class="mbody" style="text-align:center">
+      <div style="font-size:48px;margin-bottom:13px">🎫</div>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:15px;line-height:1.7">Ticket kamu telah berhasil dikirim! Catat <strong style="color:var(--gold);font-size:14px">ID Ticket</strong> kamu:</p>
+      <div id="ticketIdDisplay" style="background:var(--bg3);border:1px solid var(--b);border-radius:var(--r);padding:12px;font-family:'Courier New',monospace;font-size:18px;font-weight:700;color:var(--acc);letter-spacing:2px;margin-bottom:13px"></div>
+      <p style="font-size:11px;color:var(--t3)">Tiket akan diproses oleh admin. Cek status di menu Ticket Saya.</p>
+    </div>
+    <div class="mfoot"><button class="btn btn-p" onclick="cm('moTicketSuccess');nav('report');stab(null,'t-list');loadMyTickets();">Lihat Ticket Saya</button></div>
+  </div>
+</div>
+
+<div class="modal" id="moTicketDetail">
+  <div class="mdl wide"><div class="mhdr"><div class="mtitle">Detail Ticket</div><button class="mcls" onclick="cm('moTicketDetail')">✕</button></div>
+    <div class="mbody" id="ticketDetailBody"></div>
+    <div class="mfoot" id="ticketDetailAct"></div>
+  </div>
+</div>
+
 <div class="modal" id="moImg" onclick="if(event.target===this)cm('moImg')">
   <div class="mdl" style="background:transparent;border:none;max-width:92vw;width:auto;position:relative">
     <button onclick="cm('moImg')" style="position:absolute;top:-36px;right:0;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;backdrop-filter:blur(4px)" title="Tutup">✕</button>
@@ -409,7 +429,7 @@ tr:hover td{background:rgba(255,255,255,.01)}
   <div class="mob-lnk" onclick="nav('whitelist');closeMob()"><span>📋</span>Whitelist</div>
   <div class="mob-lnk" onclick="nav('cs');closeMob()"><span>🎭</span>Character Story</div>
   <div class="mob-lnk" onclick="nav('import');closeMob()"><span>📦</span>Import Request</div>
-  <div class="mob-lnk" onclick="nav('report');closeMob()"><span>🚩</span>Laporan</div>
+  <div class="mob-lnk" onclick="nav('report');closeMob()"><span>🎫</span>Ticket</div>
   <div class="mob-sec">Informasi</div>
   <div class="mob-lnk" onclick="nav('announcements');closeMob()"><span>📢</span>Pengumuman</div>
   <div class="mob-lnk" onclick="nav('rules');closeMob()"><span>📜</span>Rules & Guide</div>
@@ -432,7 +452,7 @@ tr:hover td{background:rgba(255,255,255,.01)}
     <a data-p="staff" onclick="nav('staff')">Staff</a>
     <a data-p="leaderboard" onclick="nav('leaderboard')">Leaderboard</a>
     <a data-p="rules" onclick="nav('rules')">Rules</a>
-    <a data-p="report" onclick="nav('report')">Report</a>
+    <a data-p="report" onclick="nav('report')">Ticket</a>
     <a data-p="admin" id="admNavLink" onclick="nav('admin')" style="display:none;color:var(--pur)">Admin</a>
   </nav>
   <div class="tb-right" id="tbRight">
@@ -466,7 +486,7 @@ tr:hover td{background:rgba(255,255,255,.01)}
           <div class="cat-item" onclick="nav('whitelist')"><div class="cat-icon">📋</div><div class="cat-info"><div class="cat-name">Whitelist</div><div class="cat-desc">Pendaftaran member baru</div></div><span id="hWLBadge" class="cat-badge" style="display:none">0</span><span class="cat-arr">›</span></div>
           <div class="cat-item" onclick="nav('cs')"><div class="cat-icon">🎭</div><div class="cat-info"><div class="cat-name">Character Story</div><div class="cat-desc">Request latar belakang karakter</div></div><span class="cat-arr">›</span></div>
           <div class="cat-item" onclick="nav('import')"><div class="cat-icon">📦</div><div class="cat-info"><div class="cat-name">Import Request</div><div class="cat-desc">Import goodside / badside / family</div></div><span class="cat-arr">›</span></div>
-          <div class="cat-item" onclick="nav('report')"><div class="cat-icon">🚩</div><div class="cat-info"><div class="cat-name">Laporan</div><div class="cat-desc">Report pelanggaran &amp; minta bantuan</div></div><span class="cat-arr">›</span></div>
+          <div class="cat-item" onclick="nav('report')"><div class="cat-icon">🎫</div><div class="cat-info"><div class="cat-name">Ticket</div><div class="cat-desc">Buat ticket &amp; cek status</div></div><span class="cat-arr">›</span></div>
         </div>
       </div>
       <div class="cat-section">
@@ -675,27 +695,66 @@ tr:hover td{background:rgba(255,255,255,.01)}
   </div></div></div>
 </div>
 
-<!-- PAGE: REPORT -->
+<!-- PAGE: TICKET -->
 <div class="page" id="page-report">
   <div class="ctr"><div class="two-col">
     <div class="main-col">
-      <div class="ibox warn" style="margin-bottom:11px">⚠️ Sertakan bukti valid. Laporan palsu dapat mengakibatkan sanksi.</div>
-      <div class="card card-p">
-        <div style="font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:#fff;margin-bottom:13px">Formulir Laporan</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-          <div class="fg"><label class="fl">Nama IC Pelapor</label><input type="text" class="fi" id="repReporter" placeholder="Nama_IC_Kamu"></div>
-          <div class="fg"><label class="fl">Nama / ID Terlapor</label><input type="text" class="fi" id="repTarget" placeholder="Nama_IC / ID"></div>
+      <div class="tabs">
+        <button class="tbn act" onclick="stab(this,'t-new');document.getElementById('myTicketList').style.display='none'">📝 Buat Ticket</button>
+        <button class="tbn" onclick="stab(this,'t-list');loadMyTickets();document.getElementById('myTicketList').style.display='block'">📋 Ticket Saya</button>
+      </div>
+      <div class="tpanel act" id="t-new">
+        <div class="ibox info" style="margin-bottom:11px">📢 Sistem Ticket Baru - Kamu bisa membuat max <strong style="color:var(--gold)">3 ticket</strong> sekaligus.</div>
+        <div class="card card-p">
+          <div style="font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:#fff;margin-bottom:13px">Formulir Ticket</div>
+          <div class="fg"><label class="fl">Kategori</label><select class="fi" id="ticketCategory" onchange="toggleTicketFields()"><option value="">Pilih kategori...</option><option value="bug">🐛 Report Bug</option><option value="player">🚩 Report Player</option><option value="staff">👮 Report Staff</option><option value="ask">❓ Ask Staff</option></select></div>
+          <div id="playerFields" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+              <div class="fg"><label class="fl">Nama IC Pelapor</label><input type="text" class="fi" id="ticketReporter" placeholder="Nama_IC_Kamu"></div>
+              <div class="fg"><label class="fl">Nama / ID Terlapor</label><input type="text" class="fi" id="ticketTarget" placeholder="Nama_IC / ID"></div>
+            </div>
+            <div class="fg"><label class="fl">Jenis Pelanggaran</label><select class="fi" id="ticketType"><option value="">Pilih...</option><option>DM (Deathmatch)</option><option>VDM</option><option>Hack / Cheat</option><option>Bug Abuse</option><option>Bad RP</option><option>Metagaming</option><option>Powergaming</option><option>OOC Harassment</option><option>Scam</option><option>Random Kill</option><option>Lainnya</option></select></div>
+          </div>
+          <div id="staffFields" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+              <div class="fg"><label class="fl">Nama IC Pelapor</label><input type="text" class="fi" id="ticketReporterStaff" placeholder="Nama_IC_Kamu"></div>
+              <div class="fg"><label class="fl">Nama Staff Terlapor</label><input type="text" class="fi" id="ticketTargetStaff" placeholder="Nama Staff"></div>
+            </div>
+            <div class="fg"><label class="fl">Jenis Pelaporan</label><select class="fi" id="ticketTypeStaff"><option value="">Pilih...</option><option> abuse</option><option>Melanggar Rules</option><option>Tidak Netral</option><option>Lainnya</option></select></div>
+          </div>
+          <div id="bugFields" style="display:none">
+            <div class="fg"><label class="fl">Judul Bug</label><input type="text" class="fi" id="ticketBugTitle" placeholder="Contoh: Bug saat login"></div>
+          </div>
+          <div id="askFields" style="display:none">
+            <div class="fg"><label class="fl">Subjek</label><input type="text" class="fi" id="ticketAskSubject" placeholder="Apa yang ingin kamu tanyakan?"></div>
+          </div>
+          <div class="fg"><label class="fl">Tanggal &amp; Waktu</label><input type="datetime-local" class="fi" id="ticketDate"></div>
+          <div class="fg"><label class="fl">Kronologi / Detail</label><textarea class="fi" id="ticketKron" rows="5" placeholder="Jelaskan secara rinci..."></textarea></div>
+          <div class="fg">
+            <label class="fl">Upload Bukti (Screenshot/Video)</label>
+            <div id="ticketImgDrop" onclick="document.getElementById('ticketImgIn').click()" ondragover="event.preventDefault();this.style.borderColor='var(--acc)'" ondragleave="this.style.borderColor='var(--b3)'" ondrop="event.preventDefault();this.style.borderColor='var(--b3)';if(event.dataTransfer.files[0]){document.getElementById('ticketImgIn').files=event.dataTransfer.files;previewTicketImg(document.getElementById('ticketImgIn'));}" style="border:2px dashed var(--b3);border-radius:var(--r2);padding:18px;text-align:center;cursor:pointer;transition:border-color .13s" onmouseover="this.style.borderColor='var(--acc)'" onmouseout="this.style.borderColor='var(--b3)'">
+              <div style="font-size:20px;margin-bottom:4px">📷</div>
+              <div style="font-size:12px;color:var(--t2)">Klik atau drag foto ke sini</div>
+              <div style="font-size:10px;color:var(--t3);margin-top:2px">JPG, PNG - max 5MB</div>
+              <input type="file" id="ticketImgIn" accept="image/*" style="display:none" onchange="previewTicketImg(this)">
+            </div>
+            <div id="ticketImgPrev" style="display:none;margin-top:8px;position:relative">
+              <img id="ticketImgPreview" style="max-width:200px;max-height:150px;border-radius:var(--r);border:1px solid var(--b)">
+              <button onclick="clearTicketImg()" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);border:none;color:#fff;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px">✕</button>
+            </div>
+            <div id="ticketUploadStatus" style="display:none;margin-top:5px" class="ibox info">Mengupload...</div>
+          </div>
+          <button class="btn btn-p" onclick="submitTicket()" id="submitTicketBtn">Kirim Ticket</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
-          <div class="fg"><label class="fl">Jenis Pelanggaran</label><select class="fi" id="repType"><option value="">Pilih...</option><option>DM (Deathmatch)</option><option>VDM</option><option>Hack / Cheat</option><option>Bug Abuse</option><option>Bad RP</option><option>Metagaming</option><option>Powergaming</option><option>OOC Harassment</option><option>Scam</option><option>Random Kill</option><option>Lainnya</option></select></div>
-          <div class="fg"><label class="fl">Tanggal &amp; Waktu</label><input type="datetime-local" class="fi" id="repDate"></div>
+      </div>
+      <div class="tpanel" id="t-list">
+        <div class="card card-p">
+          <div style="font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:#fff;margin-bottom:13px">Daftar Ticket Saya</div>
+          <div id="myTicketList"><div style="padding:20px;text-align:center;color:var(--t3)">Memuat...</div></div>
         </div>
-        <div class="fg"><label class="fl">Kronologi Kejadian</label><textarea class="fi" id="repKron" rows="5" placeholder="Jelaskan secara rinci..."></textarea></div>
-        <div class="fg"><label class="fl">Link Bukti (Screenshot/Video)</label><input type="text" class="fi" id="repBukti" placeholder="https://..."></div>
-        <button class="btn btn-p" onclick="submitReport()">Kirim Laporan</button>
       </div>
     </div>
-    <div class="side-col"><div class="wgt"><div class="wgt-hdr">📌 Panduan Report</div><div class="wgt-bd" style="font-size:12px;color:var(--t2);line-height:2.2"><p>1. Sertakan bukti valid</p><p>2. Isi semua kolom</p><p>3. Jangan laporan palsu</p><p>4. Tunggu respons staff</p></div></div></div>
+    <div class="side-col"><div class="wgt"><div class="wgt-hdr">📌 Panduan Ticket</div><div class="wgt-bd" style="font-size:12px;color:var(--t2);line-height:2.2"><p>🐛 <strong>Report Bug</strong> - Laporkan bug/glitch</p><p>🚩 <strong>Report Player</strong> - Laporkan pemain</p><p>👮 <strong>Report Staff</strong> - Laporkan staff</p><p>❓ <strong>Ask Staff</strong> - Tanya admin</p><p style="margin-top:8px;color:var(--gold)">📊 Max 3 ticket aktif</p></div></div></div>
   </div></div>
 </div>
 
@@ -875,9 +934,9 @@ tr:hover td{background:rgba(255,255,255,.01)}
       </div>
 
       <div class="adm-tab" id="adm-reports">
-        <div class="adm-h1">Reports</div>
-        <div class="tbl-wrap"><div class="tbl-hdr"><div class="tbl-ttl">Daftar Laporan</div><input class="tbl-srch" placeholder="Cari..." oninput="ftbl('tbReports',this.value)"></div>
-        <table><thead><tr><th>Pelapor</th><th>Terlapor</th><th>Jenis</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="tbReports"><tr class="empty-row"><td colspan="6">Memuat...</td></tr></tbody></table></div>
+        <div class="adm-h1">Kelola Tickets</div>
+        <div class="tbl-wrap"><div class="tbl-hdr"><div class="tbl-ttl">Daftar Tickets</div><input class="tbl-srch" placeholder="Cari..." oninput="ftbl('tbTickets',this.value)"></div>
+        <table><thead><tr><th>ID</th><th>Kategori</th><th>Pelapor</th><th>Terlapor</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody id="tbTickets"><tr class="empty-row"><td colspan="7">Memuat...</td></tr></tbody></table></div>
       </div>
 
       <div class="adm-tab" id="adm-announce">
@@ -1436,16 +1495,216 @@ function loadGuides(type){
   });
 }
 
-// ============ REPORT ============
-function submitReport(){
+// ============ TICKET SYSTEM ============
+var pendingTicketImgB64 = null;
+var TICKET_CAT = {bug:'🐛 Report Bug',player:'🚩 Report Player',staff:'👮 Report Staff',ask:'❓ Ask Staff'};
+var TICKET_STATUS = {open:'Open',process:'Process',done:'Selesai',closed:'Closed'};
+
+function toggleTicketFields(){
+  var cat = gv('ticketCategory');
+  document.getElementById('playerFields').style.display = (cat === 'player') ? '' : 'none';
+  document.getElementById('staffFields').style.display = (cat === 'staff') ? '' : 'none';
+  document.getElementById('bugFields').style.display = (cat === 'bug') ? '' : 'none';
+  document.getElementById('askFields').style.display = (cat === 'ask') ? '' : 'none';
+}
+
+function previewTicketImg(input){
+  var file = input.files[0]; if(!file) return;
+  if(file.size > 5*1024*1024){toast('Foto max 5MB!','e');return;}
+  var r = new FileReader();
+  r.onload = function(e){
+    pendingTicketImgB64 = e.target.result;
+    document.getElementById('ticketImgPrev').style.display = '';
+    document.getElementById('ticketImgPreview').src = e.target.result;
+    document.getElementById('ticketImgDrop').style.display = 'none';
+  };
+  r.readAsDataURL(file);
+}
+
+function clearTicketImg(){
+  pendingTicketImgB64 = null;
+  document.getElementById('ticketImgPrev').style.display = 'none';
+  document.getElementById('ticketImgPreview').src = '';
+  document.getElementById('ticketImgDrop').style.display = '';
+  document.getElementById('ticketImgIn').value = '';
+}
+
+function submitTicket(){
   if(!CU){om('moLogin');return;}
-  var rep=gv('repReporter').trim(),tar=gv('repTarget').trim(),typ=gv('repType'),dt=gv('repDate'),kron=gv('repKron').trim(),bkti=gv('repBukti').trim();
-  if(!rep||!tar||!typ||!kron){toast('Isi semua field wajib!','e');return;}
-  var key=DB.ref('reports').push().key;
-  DB.ref('reports/'+key).set({uid:CU.uid,reporter:rep,target:tar,type:typ,date:dt,kronologi:kron,bukti:bkti,status:'open',createdAt:Date.now()}).then(function(){
-    toast('Laporan terkirim!','s');
-    document.getElementById('repReporter').value='';document.getElementById('repTarget').value='';document.getElementById('repType').value='';document.getElementById('repKron').value='';document.getElementById('repBukti').value='';
-  }).catch(function(e){toast('Gagal: '+e.message,'e');});
+  var cat = gv('ticketCategory');
+  if(!cat){toast('Pilih kategori ticket!','e');return;}
+  
+  // Check max 3 tickets
+  DB.ref('tickets').orderByChild('uid').equalTo(CU.uid).get().then(function(snap){
+    var openTickets = 0;
+    if(snap.exists()){
+      Object.values(snap.val()).forEach(function(t){
+        if(t.status !== 'closed' && t.status !== 'done') openTickets++;
+      });
+    }
+    if(openTickets >= 3){
+      toast('Maksimal 3 ticket aktif! Tunggu ticket sebelumnya selesai.','e');
+      return;
+    }
+    doSubmitTicket(cat, openTickets);
+  });
+}
+
+function doSubmitTicket(cat, currentCount){
+  var reporter = '', target = '', type = '', title = '', subject = '';
+  var kron = gv('ticketKron').trim();
+  var dt = gv('ticketDate');
+  
+  if(cat === 'player'){
+    reporter = gv('ticketReporter').trim();
+    target = gv('ticketTarget').trim();
+    type = gv('ticketType');
+    if(!reporter || !target || !type || !kron){toast('Isi semua field wajib!','e');return;}
+  } else if(cat === 'staff'){
+    reporter = gv('ticketReporterStaff').trim();
+    target = gv('ticketTargetStaff').trim();
+    type = gv('ticketTypeStaff');
+    if(!reporter || !target || !type || !kron){toast('Isi semua field wajib!','e');return;}
+  } else if(cat === 'bug'){
+    title = gv('ticketBugTitle').trim();
+    if(!title || !kron){toast('Isi semua field wajib!','e');return;}
+  } else if(cat === 'ask'){
+    subject = gv('ticketAskSubject').trim();
+    if(!subject || !kron){toast('Isi semua field wajib!','e');return;}
+  }
+  
+  var btn = document.getElementById('submitTicketBtn');
+  btn.disabled = true; btn.textContent = 'Mengirim...';
+  
+  // Upload image if exists
+  var imgUrl = '';
+  var uploadPromise = Promise.resolve(null);
+  
+  if(pendingTicketImgB64){
+    document.getElementById('ticketUploadStatus').style.display = '';
+    document.getElementById('ticketUploadStatus').textContent = 'Mengupload bukti...';
+    uploadPromise = new Promise(function(resolve, reject){
+      uploadToImgBB(pendingTicketImgB64, function(err, url){
+        if(err){reject(err);} else {resolve(url);}
+      });
+    });
+  }
+  
+  uploadPromise.then(function(url){
+    imgUrl = url || '';
+    var ticketId = 'TKT-' + Date.now().toString(36).toUpperCase();
+    var ticketData = {
+      ticketId: ticketId,
+      uid: CU.uid,
+      username: UP ? UP.username : 'Unknown',
+      category: cat,
+      reporter: reporter,
+      target: target,
+      type: type,
+      title: title,
+      subject: subject,
+      kronologi: kron,
+      bukti: imgUrl,
+      date: dt,
+      status: 'open',
+      createdAt: Date.now()
+    };
+    
+    DB.ref('tickets/' + ticketId).set(ticketData).then(function(){
+      addLog('TICKET', UP.username + ' buat ticket: ' + ticketId + ' (' + cat + ')');
+      document.getElementById('ticketIdDisplay').textContent = ticketId;
+      om('moTicketSuccess');
+      // Reset form
+      document.getElementById('ticketCategory').value = '';
+      document.getElementById('ticketReporter').value = '';
+      document.getElementById('ticketTarget').value = '';
+      document.getElementById('ticketType').value = '';
+      document.getElementById('ticketReporterStaff').value = '';
+      document.getElementById('ticketTargetStaff').value = '';
+      document.getElementById('ticketTypeStaff').value = '';
+      document.getElementById('ticketBugTitle').value = '';
+      document.getElementById('ticketAskSubject').value = '';
+      document.getElementById('ticketKron').value = '';
+      document.getElementById('ticketDate').value = '';
+      clearTicketImg();
+      toggleTicketFields();
+      btn.disabled = false; btn.textContent = 'Kirim Ticket';
+      document.getElementById('ticketUploadStatus').style.display = 'none';
+    }).catch(function(e){
+      toast('Gagal: ' + e.message, 'e');
+      btn.disabled = false; btn.textContent = 'Kirim Ticket';
+      document.getElementById('ticketUploadStatus').style.display = 'none';
+    });
+  }).catch(function(e){
+    toast('Upload gagal: ' + e, 'e');
+    btn.disabled = false; btn.textContent = 'Kirim Ticket';
+    document.getElementById('ticketUploadStatus').style.display = 'none';
+  });
+}
+
+function loadMyTickets(){
+  if(!CU) return;
+  var el = document.getElementById('myTicketList');
+  if(!el) return;
+  
+  DB.ref('tickets').orderByChild('uid').equalTo(CU.uid).get().then(function(snap){
+    if(!snap.exists()){
+      el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">Belum ada ticket.</div>';
+      return;
+    }
+    var list = Object.values(snap.val()).sort(function(a,b){return b.createdAt - a.createdAt;});
+    el.innerHTML = list.map(function(t){
+      var catLabel = TICKET_CAT[t.category] || t.category;
+      var statusClass = t.status === 'open' ? 'pending' : t.status === 'process' ? 'process' : t.status === 'done' ? 'accepted' : 'closed';
+      var targetTxt = t.target || (t.title || t.subject || '—');
+      return '<div style="background:var(--bg3);border:1px solid var(--b);border-radius:var(--r2);padding:13px;margin-bottom:8px;cursor:pointer" onclick="viewMyTicket(\''+t.ticketId+'\')">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+          '<span style="font-family:monospace;font-size:11px;color:var(--acc);font-weight:700">'+esc(t.ticketId)+'</span>' +
+          '<span class="bdg b-'+statusClass+'">'+esc(TICKET_STATUS[t.status]||t.status)+'</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:var(--t2);margin-bottom:3px"><strong style="color:#fff">'+catLabel+'</strong></div>' +
+        '<div style="font-size:11px;color:var(--t3)">Target: '+esc(targetTxt)+' | '+fmtD(t.createdAt)+'</div>' +
+        (t.adminNote ? '<div style="margin-top:6px;padding:6px;background:var(--bg2);border-radius:var(--r);font-size:11px;color:var(--grn)">💬 '+esc(t.adminNote)+'</div>' : '') +
+      '</div>';
+    }).join('');
+  });
+}
+
+function viewMyTicket(ticketId){
+  DB.ref('tickets/' + ticketId).get().then(function(snap){
+    if(!snap.exists()){toast('Ticket tidak ditemukan','e');return;}
+    var t = snap.val();
+    var catLabel = TICKET_CAT[t.category] || t.category;
+    var statusClass = t.status === 'open' ? 'pending' : t.status === 'process' ? 'process' : t.status === 'done' ? 'accepted' : 'closed';
+    var targetTxt = t.target || t.title || t.subject || '—';
+    
+    var html = '<div class="drow"><div class="dk">Ticket ID</div><div class="dv" style="color:var(--acc);font-family:monospace">'+esc(t.ticketId)+'</div></div>' +
+      '<div class="drow"><div class="dk">Kategori</div><div class="dv">'+catLabel+'</div></div>' +
+      '<div class="drow"><div class="dk">Status</div><div class="dv"><span class="bdg b-'+statusClass+'">'+esc(TICKET_STATUS[t.status]||t.status)+'</span></div></div>' +
+      '<div class="drow"><div class="dk">Pelapor</div><div class="dv">'+esc(t.reporter || t.username || '—')+'</div></div>' +
+      '<div class="drow"><div class="dk">Target/Subject</div><div class="dv">'+esc(targetTxt)+'</div></div>' +
+      (t.type ? '<div class="drow"><div class="dk">Jenis</div><div class="dv">'+esc(t.type)+'</div></div>' : '') +
+      (t.date ? '<div class="drow"><div class="dk">Tanggal Kejadian</div><div class="dv">'+esc(t.date)+'</div></div>' : '') +
+      '<div style="margin-top:11px"><div class="fl" style="margin-bottom:5px">Kronologi</div><div class="dstory">'+esc(t.kronologi||'—')+'</div></div>';
+    
+    if(t.bukti){
+      html += '<div style="margin-top:11px"><div class="fl" style="margin-bottom:5px">Bukti</div><a href="'+esc(t.bukti)+'" target="_blank" style="color:var(--acc)"><img src="'+esc(t.bukti)+'" style="max-width:200px;max-height:150px;border-radius:var(--r);border:1px solid var(--b)"></a></div>';
+    }
+    
+    if(t.adminNote){
+      html += '<div style="margin-top:11px;padding:10px;background:var(--bg3);border-radius:var(--r);border-left:3px solid var(--grn)"><div class="fl" style="margin-bottom:4px">💬 Response Admin</div><div style="font-size:12px;color:var(--t)">'+esc(t.adminNote)+'</div>';
+      if(t.adminBukti){
+        html += '<div style="margin-top:8px"><div class="fl" style="margin-bottom:4px">Bukti Punishment</div><a href="'+esc(t.adminBukti)+'" target="_blank"><img src="'+esc(t.adminBukti)+'" style="max-width:150px;max-height:100px;border-radius:var(--r)"></a></div>';
+      }
+      html += '</div>';
+    }
+    
+    html += '<div style="margin-top:11px;font-size:10px;color:var(--t3)">Dibuat: '+fmtD(t.createdAt)+'</div>';
+    
+    document.getElementById('ticketDetailBody').innerHTML = html;
+    document.getElementById('ticketDetailAct').innerHTML = '<button class="btn" onclick="cm(\'moTicketDetail\')">Tutup</button>';
+    om('moTicketDetail');
+  });
 }
 
 // ============ PROFILE ============
@@ -1794,7 +2053,7 @@ var ADM_MENU=[
   {sec:'Manajemen'},
   {id:'users',icon:'👥',label:'Users',perm:'manage_roles'},
   {id:'banned',icon:'🚫',label:'Banned',perm:'ban_user'},
-  {id:'reports',icon:'🚩',label:'Reports',perm:null},
+  {id:'reports',icon:'🎫',label:'Tickets',perm:null},
   {sec:'Konten'},
   {id:'announce',icon:'📢',label:'Pengumuman',perm:'manage_announce'},
   {id:'guides',icon:'📖',label:'Rules & Guide',perm:'manage_guides'},
@@ -1812,7 +2071,7 @@ function initAdmin(){
   loadAdmCS();
   loadAdmImport();
   loadAdmUsers();
-  loadAdmReports();
+  loadAdmTickets();
   loadAdmAnn();
   loadAdmGuides();
   loadAdmStaff();
@@ -1868,7 +2127,11 @@ function loadAdmDashboard(){
   });
   DB.ref('cs_requests').orderByChild('status').equalTo('pending').get().then(function(s){st('dCSPend',s.exists()?Object.keys(s.val()).length:0);});
   DB.ref('import_requests').orderByChild('status').equalTo('pending').get().then(function(s){st('dImpPend',s.exists()?Object.keys(s.val()).length:0);});
-  DB.ref('reports').orderByChild('status').equalTo('open').get().then(function(s){st('dRepOpen',s.exists()?Object.keys(s.val()).length:0);});
+  DB.ref('tickets').orderByChild('status').get().then(function(s){
+    if(!s.exists()){st('dRepOpen',0);return;}
+    var openTickets = Object.values(s.val()).filter(function(t){return t.status === 'open' || t.status === 'process';}).length;
+    st('dRepOpen', openTickets);
+  });
 }
 
 // Admin WL
@@ -2049,16 +2312,121 @@ function confirmIC(){
   DB.ref('users/'+icTarget+'/icName').set(ic).then(function(){addLog('ROLE',UP.username+' edit IC '+icTarget+': '+ic);toast('IC Name diupdate!','s');cm('moIC');loadAdmUsers();});
 }
 
-// Admin Reports
-function loadAdmReports(){
-  DB.ref('reports').get().then(function(snap){
-    if(!snap.exists()){document.getElementById('tbReports').innerHTML='<tr class="empty-row"><td colspan="6">Tidak ada laporan.</td></tr>';return;}
+// Admin Tickets
+function loadAdmTickets(){
+  DB.ref('tickets').orderByChild('createdAt').get().then(function(snap){
+    if(!snap.exists()){document.getElementById('tbTickets').innerHTML='<tr class="empty-row"><td colspan="7">Tidak ada ticket.</td></tr>';return;}
     var all=Object.entries(snap.val()).sort(function(a,b){return(b[1].createdAt||0)-(a[1].createdAt||0);});
-    document.getElementById('tbReports').innerHTML=all.map(function(e){var k=e[0],r=e[1];return'<tr><td>'+esc(r.reporter||'—')+'</td><td>'+esc(r.target||'—')+'</td><td>'+esc(r.type||'—')+'</td><td><span class="bdg b-'+r.status+'">'+esc(r.status||'open')+'</span></td><td>'+fmtD(r.createdAt)+'</td><td><button class="atb" onclick="closeReport(\''+k+'\')">Tutup</button></td></tr>';}).join('');
+    document.getElementById('tbTickets').innerHTML=all.map(function(e){
+      var k=e[0],t=e[1];
+      var catLabel = TICKET_CAT[t.category] || t.category;
+      var targetTxt = t.target || t.title || t.subject || '—';
+      return'<tr><td style="font-family:monospace;font-size:10px;color:var(--acc)">'+esc(t.ticketId||k)+'</td><td>'+catLabel+'</td><td>'+esc(t.reporter||t.username||'—')+'</td><td>'+esc(targetTxt)+'</td><td><span class="bdg b-'+(t.status==='open'?'pending':t.status==='process'?'process':t.status==='done'?'accepted':'closed')+'">'+esc(TICKET_STATUS[t.status]||t.status)+'</span></td><td>'+fmtD(t.createdAt)+'</td><td><button class="atb" onclick="openTicketDetail(\''+t.ticketId+'\')">Detail</button></td></tr>';
+    }).join('');
+    // Update badge
+    var openCount = all.filter(function(e){return e[1].status === 'open' || e[1].status === 'process';}).length;
+    st('dRepOpen', openCount);
   });
 }
-function closeReport(key){
-  DB.ref('reports/'+key+'/status').set('closed').then(function(){toast('Laporan ditutup.','s');loadAdmReports();});
+
+function openTicketDetail(ticketId){
+  DB.ref('tickets/' + ticketId).get().then(function(snap){
+    if(!snap.exists()){toast('Ticket tidak ditemukan','e');return;}
+    var t = snap.val();
+    var catLabel = TICKET_CAT[t.category] || t.category;
+    var targetTxt = t.target || t.title || t.subject || '—';
+    
+    var html = '<div class="drow"><div class="dk">Ticket ID</div><div class="dv" style="color:var(--acc);font-family:monospace">'+esc(t.ticketId)+'</div></div>' +
+      '<div class="drow"><div class="dk">Kategori</div><div class="dv">'+catLabel+'</div></div>' +
+      '<div class="drow"><div class="dk">User</div><div class="dv">'+esc(t.username||'—')+' (UID: '+esc(t.uid||'—')+')</div></div>' +
+      '<div class="drow"><div class="dk">Pelapor</div><div class="dv">'+esc(t.reporter||'—')+'</div></div>' +
+      '<div class="drow"><div class="dk">Target/Subject</div><div class="dv">'+esc(targetTxt)+'</div></div>';
+    
+    if(t.type) html += '<div class="drow"><div class="dk">Jenis</div><div class="dv">'+esc(t.type)+'</div></div>';
+    if(t.date) html += '<div class="drow"><div class="dk">Tanggal</div><div class="dv">'+esc(t.date)+'</div></div>';
+    
+    html += '<div style="margin-top:11px"><div class="fl" style="margin-bottom:5px">Kronologi</div><div class="dstory">'+esc(t.kronologi||'—')+'</div></div>';
+    
+    if(t.bukti){
+      html += '<div style="margin-top:11px"><div class="fl" style="margin-bottom:5px">Bukti User</div><a href="'+esc(t.bukti)+'" target="_blank"><img src="'+esc(t.bukti)+'" style="max-width:200px;max-height:150px;border-radius:var(--r)"></a></div>';
+    }
+    
+    // Admin response section
+    html += '<div class="fg" style="margin-top:15px"><label class="fl">Catatan Admin / Response</label><input type="text" class="fi" id="ticketAdminNote" value="'+esc(t.adminNote||'')+'" placeholder="Silahkan pm wa saya untuk melanjutkan... atau berikan update"></div>';
+    
+    html += '<div style="margin-top:11px"><div class="fl" style="margin-bottom:5px">Upload Bukti Punishment (Opsional)</div>' +
+      '<div id="ticketPunishImgDrop" onclick="document.getElementById(\'ticketPunishImgIn\').click()" style="border:2px dashed var(--b3);border-radius:var(--r2);padding:12px;text-align:center;cursor:pointer">' +
+      '<div style="font-size:16px">📷</div><div style="font-size:11px;color:var(--t3)">Klik upload bukti</div></div>' +
+      '<input type="file" id="ticketPunishImgIn" accept="image/*" style="display:none" onchange="previewTicketPunish(this)">' +
+      '<div id="ticketPunishPrev" style="display:none;margin-top:5px;position:relative">' +
+      '<img id="ticketPunishPreview" style="max-width:150px;max-height:100px;border-radius:var(--r)">' +
+      '<button onclick="clearTicketPunish()" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);color:#fff;width:18px;height:18px;border-radius:50%;border:none;cursor:pointer;font-size:10px">✕</button></div></div>';
+    
+    html += '<div style="margin-top:11px;font-size:10px;color:var(--t3)">Dibuat: '+fmtD(t.createdAt)+'</div>';
+    
+    var acts = '<button class="btn" onclick="cm(\'moTicketDetail\')">Tutup</button>';
+    if(t.status !== 'done' && t.status !== 'closed'){
+      acts += '<button class="btn btn-p" onclick="processTicket(\''+ticketId+'\',\'process\')"> Proses</button>';
+      acts += '<button class="btn btn-g" onclick="processTicket(\''+ticketId+'\',\'done\')"> Selesai</button>';
+      acts += '<button class="btn btn-r" onclick="processTicket(\''+ticketId+'\',\'closed\')"> Tutup</button>';
+    }
+    
+    document.getElementById('ticketDetailBody').innerHTML = html;
+    document.getElementById('ticketDetailAct').innerHTML = acts;
+    window.currentTicketId = ticketId;
+    om('moTicketDetail');
+  });
+}
+
+var pendingTicketPunishB64 = null;
+
+function previewTicketPunish(input){
+  var file = input.files[0]; if(!file) return;
+  if(file.size > 5*1024*1024){toast('Max 5MB!','e');return;}
+  var r = new FileReader();
+  r.onload = function(e){
+    pendingTicketPunishB64 = e.target.result;
+    document.getElementById('ticketPunishPrev').style.display = '';
+    document.getElementById('ticketPunishPreview').src = e.target.result;
+    document.getElementById('ticketPunishImgDrop').style.display = 'none';
+  };
+  r.readAsDataURL(file);
+}
+
+function clearTicketPunish(){
+  pendingTicketPunishB64 = null;
+  document.getElementById('ticketPunishPrev').style.display = 'none';
+  document.getElementById('ticketPunishPreview').src = '';
+  document.getElementById('ticketPunishImgDrop').style.display = '';
+  document.getElementById('ticketPunishImgIn').value = '';
+}
+
+function processTicket(ticketId, status){
+  var note = document.getElementById('ticketAdminNote') ? gv('ticketAdminNote') : '';
+  var updateData = {status: status, reviewedAt: Date.now(), reviewedBy: UP.username};
+  if(note) updateData.adminNote = note;
+  
+  var promise = Promise.resolve(null);
+  
+  if(pendingTicketPunishB64 && status === 'done'){
+    promise = new Promise(function(resolve, reject){
+      uploadToImgBB(pendingTicketPunishB64, function(err, url){
+        if(err) reject(err); else resolve(url);
+      });
+    });
+  }
+  
+  promise.then(function(url){
+    if(url) updateData.adminBukti = url;
+    DB.ref('tickets/' + ticketId).update(updateData).then(function(){
+      addLog('TICKET', UP.username + ' ' + status + ' ticket: ' + ticketId);
+      toast('Ticket diupdate!','s');
+      cm('moTicketDetail');
+      loadAdmTickets();
+    });
+  }).catch(function(e){
+    toast('Gagal: ' + e, 'e');
+  });
 }
 
 // Admin Announcements
@@ -2218,3 +2586,4 @@ setTimeout(function(){document.getElementById('loader').classList.add('out');}, 
 </script>
 </body>
 </html>
+
