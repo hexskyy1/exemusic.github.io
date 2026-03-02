@@ -1539,6 +1539,7 @@ function clearLogs(){
 }
 
 
+function openWLDetail(key){
   if(!hasPerm('handle_wl')){toast('Tidak ada izin.','e');return;}
   DB.ref('registrations/'+key).get().then(function(snap){
     if(!snap.exists())return;var r=snap.val();
