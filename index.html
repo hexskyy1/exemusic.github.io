@@ -299,6 +299,16 @@ tr:hover td{background:rgba(255,255,255,.01)}
   table{min-width:500px}.mdl.wide{max-width:94vw}
 }
 @media(max-width:480px){.wl-sl{display:none}.adm-sg{grid-template-columns:repeat(2,1fr)}}
+
+/* BANNED OVERLAY */
+#bannedOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#1a0a0a 0%,#0d0d1a 50%,#0a0a1a);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
+#bannedOverlay.show{display:flex}
+.banned-box{background:rgba(20,0,0,.9);border:2px solid #ff4444;border-radius:12px;padding:35px;max-width:420px;width:100%;box-shadow:0 0 60px rgba(255,0,0,.3)}
+.banned-icon{font-size:64px;margin-bottom:15px}
+.banned-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:#ff4444;margin-bottom:20px;letter-spacing:2px}
+.banned-label{font-size:11px;color:#ff6666;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.banned-value{font-size:16px;color:#fff;font-weight:600;margin-bottom:15px}
+.banned-footer{font-size:10px;color:#666;margin-top:20px}
 </style>
 </head>
 <body>
@@ -309,6 +319,19 @@ tr:hover td{background:rgba(255,255,255,.01)}
   <div class="ld-tag">Community Portal</div>
 </div>
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- BANNED OVERLAY -->
+<div id="bannedOverlay">
+  <div class="banned-box">
+    <div class="banned-icon">🚫</div>
+    <div class="banned-title">AKUN DIBLOKIR</div>
+    <div class="banned-label">Staff</div>
+    <div class="banned-value" id="bannedStaff">—</div>
+    <div class="banned-label">Alasan</div>
+    <div class="banned-value" id="bannedReason">—</div>
+    <div class="banned-footer">Silahkan hubungi staff untuk informasi lebih lanjut</div>
+  </div>
+</div>
 
 <!-- MODALS -->
 <div class="modal" id="moLogin">
@@ -500,7 +523,8 @@ tr:hover td{background:rgba(255,255,255,.01)}
     <div class="side-col">
       <div class="wgt"><div class="wgt-hdr">🖥 Server</div><div class="wgt-bd" style="padding:9px">
         <div class="srv-blk" onclick="copyTxt(document.getElementById('srvIP').textContent)"><div class="srv-tp">SA:MP Address</div><div class="srv-addr" id="srvIP">—</div></div>
-        <div class="srv-blk" onclick="copyTxt(document.getElementById('srvWA').textContent)"><div class="srv-tp">WhatsApp</div><div class="srv-addr" id="srvWA">—</div></div>
+        <div class="srv-blk" onclick="window.open('wa.me/'+CFG.waNumber,'_blank')"><div class="srv-tp">WhatsApp</div><div class="srv-addr" id="srvWA">—</div></div>
+        <div class="srv-blk" onclick="openWAGroup()"><div class="srv-tp">WhatsApp Community</div><div class="srv-addr" id="srvWAG">—</div></div>
       </div></div>
       <div class="wgt"><div class="wgt-hdr">⚡ Fitur Server</div><div class="wgt-bd" id="homeFeats" style="padding:0 13px"></div></div>
     </div>
@@ -1183,6 +1207,14 @@ function renderAuth(){
     if(mobF)mobF.innerHTML='<button class="btn btn-p" style="width:100%;justify-content:center" onclick="om(\'moLogin\');closeMob()">Masuk / Daftar</button>';
     return;
   }
+  // Check banned
+  if(UP && UP.status === 'banned'){
+    document.getElementById('bannedStaff').textContent = UP.bannedBy || 'Staff';
+    document.getElementById('bannedReason').textContent = UP.banReason || 'Melanggar rules';
+    document.getElementById('bannedOverlay').classList.add('show');
+  } else {
+    document.getElementById('bannedOverlay').classList.remove('show');
+  }
   var av=UP&&UP.photoURL?'<img src="'+esc(UP.photoURL)+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':'<span style="font-size:10px;font-weight:700">'+ini(UP&&UP.username)+'</span>';
   tbr.innerHTML='<div style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:3px 8px;border:1px solid var(--b);border-radius:var(--r)" onclick="nav(\'profile\')"><div style="width:25px;height:25px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+av+'</div><span style="font-size:11px;color:var(--t);max-width:75px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(UP&&UP.username||'')+'</span></div>';
   if(mobF)mobF.innerHTML='<div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="nav(\'profile\');closeMob()"><div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--b)">'+av+'</div><div><div style="font-size:12px;font-weight:600;color:#fff">'+esc(UP&&UP.username||'')+'</div><div style="font-size:9.5px;color:var(--t3)">'+esc(CU&&CU.email||'')+'</div></div></div>';
@@ -1196,6 +1228,7 @@ function loadConfig(){
 function applyConfig(){
   st('srvIP',CFG.serverIP||'—');st('feedIP',CFG.serverIP||'—');
   st('srvWA',CFG.waNumber?'wa.me/'+CFG.waNumber:'—');
+  st('srvWAG',CFG.waGroup||'—');
   st('staffContactWA','WhatsApp: '+(CFG.waNumber||'—'));
   DB.ref('announcements').orderByChild('ts').limitToLast(1).get().then(function(s){
     if(s.exists()){var a=Object.values(s.val())[0];show('homeAnnBar');st('homeAnnTxt',a.title||'');}
@@ -1204,6 +1237,17 @@ function applyConfig(){
     var el=document.getElementById('homeFeats');if(!el||!s.exists())return;
     el.innerHTML=Object.values(s.val()).sort(function(a,b){return a.order-b.order;}).map(function(f){return'<div class="wrow"><span>'+esc(f.icon||'')+' '+esc(f.title||'')+'</span></div>';}).join('');
   });
+}
+function openWAGroup(){
+  if(CFG.waGroup){
+    window.open('https://chat.whatsapp.com/'+CFG.waGroup,'_blank');
+  } else {
+    toast('WhatsApp Community belum diatur','e');
+  }
+}
+function openWA(phone, message){
+  var msg = message || 'Hallo, saya ingin bertanya...';
+  window.open('wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank');
 }
 function applySettings(){
   var s=SCFG;
@@ -1398,12 +1442,29 @@ function submitCS(){
   if(!icN||!charN||!age||!lvl||!story||!selCSSlot){toast('Isi semua field dan pilih jadwal!','e');return;}
   var wc=story.trim().split(/\s+/).filter(Boolean).length,min=SCFG.csMinWords||150;
   if(wc<min){toast('Story min. '+min+' kata (sekarang '+wc+')','e');return;}
-  var key=DB.ref('cs_requests').push().key;
-  DB.ref('cs_requests/'+key).set({uid:CU.uid,email:CU.email,username:UP.username,icName:icN,charName:charN,age:parseInt(age),level:parseInt(lvl),screenshot:scr,story:story,schedule:selCSSlot,status:'pending',createdAt:Date.now()}).then(function(){
-    addLog('CS',UP.username+' CS request: '+charN);toast('CS Request terkirim!','s');
-    hide('csFormWrap');show('csMyStatus');
-    document.getElementById('csMyStatus').innerHTML='<div class="ibox ok">&#10003; CS Request dikirim! Tunggu jadwal review.</div>';
-  }).catch(function(e){toast('Gagal: '+e.message,'e');});
+  var btn=document.getElementById('submitCSBtn');
+  if(btn)btn.disabled=true;
+  
+  var uploadPromise = Promise.resolve(null);
+  if(pendingCsImgB64){
+    uploadPromise = new Promise(function(resolve, reject){
+      uploadToImgBB(pendingCsImgB64, function(err, url){
+        if(err) reject(err); else resolve(url);
+      });
+    });
+  }
+  
+  uploadPromise.then(function(imgUrl){
+    var key=DB.ref('cs_requests').push().key;
+    DB.ref('cs_requests/'+key).set({uid:CU.uid,email:CU.email,username:UP.username,icName:icN,charName:charN,age:parseInt(age),level:parseInt(lvl),screenshot:imgUrl||scr,story:story,schedule:selCSSlot,status:'pending',createdAt:Date.now()}).then(function(){
+      addLog('CS',UP.username+' CS request: '+charN);toast('CS Request terkirim!','s');
+      hide('csFormWrap');show('csMyStatus');
+      document.getElementById('csMyStatus').innerHTML='<div class="ibox ok">&#10003; CS Request dikirim! Tunggu jadwal review.</div>';
+      if(btn)btn.disabled=false;
+    }).catch(function(e){toast('Gagal: '+e.message,'e');if(btn)btn.disabled=false;});
+  }).catch(function(e){
+    toast('Upload gagal: '+e,'e');if(btn)btn.disabled=false;
+  });
 }
 
 // ============ IMPORT ============
@@ -2403,7 +2464,8 @@ function clearTicketPunish(){
 
 function processTicket(ticketId, status){
   var note = document.getElementById('ticketAdminNote') ? gv('ticketAdminNote') : '';
-  var updateData = {status: status, reviewedAt: Date.now(), reviewedBy: UP.username};
+  var adminInfo = UP.username + ' - ' + (RLBL[UP.role] || UP.role || 'Staff');
+  var updateData = {status: status, reviewedAt: Date.now(), reviewedBy: adminInfo};
   if(note) updateData.adminNote = note;
   
   var promise = Promise.resolve(null);
@@ -2423,6 +2485,13 @@ function processTicket(ticketId, status){
       toast('Ticket diupdate!','s');
       cm('moTicketDetail');
       loadAdmTickets();
+      
+      // Auto-delete after 5 hours if done/closed
+      if(status === 'done' || status === 'closed'){
+        setTimeout(function(){
+          DB.ref('tickets/' + ticketId).remove();
+        }, 5 * 60 * 60 * 1000);
+      }
     });
   }).catch(function(e){
     toast('Gagal: ' + e, 'e');
@@ -2577,6 +2646,21 @@ function ftbl(tbid,q){
   var tb=document.getElementById(tbid);if(!tb)return;
   var rows=tb.querySelectorAll('tr:not(.empty-row)');
   rows.forEach(function(r){var txt=r.textContent.toLowerCase();r.style.display=txt.indexOf(q.toLowerCase())>-1?'':'none';});
+}
+
+// Logs limit - max 75 entries
+function limitLogs(){
+  DB.ref('logs').orderByChild('ts').get().then(function(snap){
+    if(!snap.exists())return;
+    var all=Object.entries(snap.val());
+    if(all.length>75){
+      var sorted=all.sort(function(a,b){return a[1].ts-b[1].ts});
+      var toDelete=sorted.slice(0,all.length-75);
+      toDelete.forEach(function(item){
+        DB.ref('logs/'+item[0]).remove();
+      });
+    }
+  });
 }
 
 // Init
