@@ -3,14 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>ExeMusic - YouTube Audio Player</title>
+<title>ExeMusic YT Audio</title>
 
 <style>
-
 body{
 background:#0f0f0f;
-font-family:Arial,Helvetica,sans-serif;
+font-family:Arial;
 color:white;
 display:flex;
 align-items:center;
@@ -19,19 +17,12 @@ height:100vh;
 margin:0;
 }
 
-.container{
+.box{
 background:#1c1c1c;
 padding:30px;
-border-radius:15px;
-width:400px;
-max-width:90%;
-box-shadow:0 0 20px rgba(0,0,0,0.6);
+border-radius:14px;
+width:420px;
 text-align:center;
-}
-
-h1{
-margin-bottom:20px;
-font-size:22px;
 }
 
 input{
@@ -39,10 +30,9 @@ width:100%;
 padding:12px;
 border:none;
 border-radius:8px;
-background:#2b2b2b;
+background:#2a2a2a;
 color:white;
-outline:none;
-margin-bottom:15px;
+margin-bottom:10px;
 }
 
 button{
@@ -54,74 +44,57 @@ background:#ff0033;
 color:white;
 font-weight:bold;
 cursor:pointer;
-transition:0.2s;
-}
-
-button:hover{
-background:#ff3355;
 }
 
 audio{
-width:100%;
 margin-top:20px;
+width:100%;
 }
-
-.info{
-margin-top:10px;
-font-size:13px;
-color:#aaa;
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="box">
 
-<h1>ExeMusic YT Player</h1>
+<h2>ExeMusic YT Audio</h2>
 
-<input id="yturl" placeholder="Paste YouTube Link">
+<input id="url" placeholder="Paste YouTube Link">
 
-<button onclick="convert()">Play Audio</button>
+<button onclick="play()">Play</button>
 
 <audio id="player" controls></audio>
-
-<div class="info">
-Paste YouTube link lalu play untuk memutar audio
-</div>
 
 </div>
 
 <script>
 
 function getID(url){
-
 let regExp = /(?:youtube\.com.*(?:\?|&)v=|youtu\.be\/)([^&#]+)/;
 let match = url.match(regExp);
-
 return match ? match[1] : null;
-
 }
 
-function convert(){
+async function play(){
 
-let url = document.getElementById("yturl").value;
-let id = getID(url);
+let url = document.getElementById("url").value
+let id = getID(url)
 
 if(!id){
-
-alert("Link YouTube tidak valid");
-return;
-
+alert("Link tidak valid")
+return
 }
 
-let audioURL = "https://yewtu.be/latest_version?id=" + id + "&itag=140";
+let api = "https://piped.video/api/v1/streams/" + id
 
-let player = document.getElementById("player");
+let res = await fetch(api)
+let data = await res.json()
 
-player.src = audioURL;
-player.play();
+let audio = data.audioStreams[0].url
+
+let player = document.getElementById("player")
+player.src = audio
+player.play()
 
 }
 
