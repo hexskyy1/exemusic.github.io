@@ -1,13 +1,12 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>MiraAudio</title>
 
 <style>
-
 *{
 margin:0;
 padding:0;
@@ -20,30 +19,28 @@ height:100vh;
 display:flex;
 align-items:center;
 justify-content:center;
-background:radial-gradient(circle at center,#0f172a,#020617);
+background:radial-gradient(circle,#0f172a,#020617);
 color:white;
-overflow:hidden;
 }
 
 .container{
 text-align:center;
-animation:fade 1.5s ease;
+animation:fade 1.2s ease;
 padding:20px;
 }
 
 .logo{
-font-size:48px;
+font-size:46px;
 font-weight:700;
 letter-spacing:2px;
 background:linear-gradient(90deg,#22c1ff,#6f8cff);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-animation:slide 1.2s ease;
 }
 
 .version{
 opacity:.6;
-margin-top:8px;
+margin-top:6px;
 font-size:14px;
 }
 
@@ -81,23 +78,9 @@ from{opacity:0}
 to{opacity:1}
 }
 
-@keyframes slide{
-from{
-transform:translateY(-30px);
-opacity:0
-}
-to{
-transform:translateY(0);
-opacity:1
-}
-}
-
 @media(max-width:600px){
-.logo{
-font-size:34px;
+.logo{font-size:32px;}
 }
-}
-
 </style>
 </head>
 
@@ -116,7 +99,7 @@ Please wait <span id="count">5</span> seconds
 
 </div>
 
-<audio id="welcomeAudio" preload="auto">
+<audio id="welcomeAudio">
 <source src="https://audio.jukehost.co.uk/22z0kp56nmEaZgdWYOvvmbBy0NJjMGBd.mp3" type="audio/mpeg">
 </audio>
 
@@ -125,16 +108,9 @@ Please wait <span id="count">5</span> seconds
 const audio = document.getElementById("welcomeAudio");
 audio.volume = 0.15;
 
-let started = false;
-
-function startAudio(){
-if(!started){
+document.body.addEventListener("click",()=>{
 audio.play().catch(()=>{});
-started = true;
-}
-}
-
-document.body.addEventListener("click", startAudio);
+},{once:true});
 
 let time = 5;
 const count = document.getElementById("count");
@@ -146,23 +122,21 @@ time--;
 count.textContent = time;
 
 if(time <= 0){
-
 clearInterval(timer);
-
 count.textContent = "0";
 
 btn.disabled = false;
 btn.classList.add("active");
-
 }
 
 },1000);
 
-btn.onclick = ()=>{
-window.location.href="index.html";
-};
+btn.addEventListener("click",()=>{
+window.location.href = "index.html";
+});
 
 </script>
 
 </body>
 </html>
+```
