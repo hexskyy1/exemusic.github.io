@@ -3,14 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiraAudio Intro</title>
+
+<title>MiraAudio</title>
 
 <style>
+
 *{
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+font-family:system-ui,-apple-system,Segoe UI,Roboto;
 }
 
 body{
@@ -18,37 +20,37 @@ height:100vh;
 display:flex;
 align-items:center;
 justify-content:center;
-background:linear-gradient(135deg,#0f0f0f,#1c1c1c,#0a0a0a);
+background:radial-gradient(circle at center,#0f172a,#020617);
 color:white;
 overflow:hidden;
 }
 
 .container{
 text-align:center;
-animation:fadeIn 1.5s ease;
+animation:fade 1.5s ease;
 padding:20px;
 }
 
 .logo{
-font-size:50px;
+font-size:48px;
 font-weight:700;
 letter-spacing:2px;
-background:linear-gradient(90deg,#00c6ff,#0072ff);
+background:linear-gradient(90deg,#22c1ff,#6f8cff);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-animation:slideDown 1.5s ease;
+animation:slide 1.2s ease;
 }
 
 .version{
+opacity:.6;
 margin-top:8px;
-opacity:0.7;
 font-size:14px;
 }
 
 .wait{
-margin-top:30px;
-font-size:16px;
-opacity:0.8;
+margin-top:25px;
+font-size:15px;
+opacity:.8;
 }
 
 button{
@@ -56,77 +58,87 @@ margin-top:25px;
 padding:12px 35px;
 font-size:16px;
 border:none;
-border-radius:8px;
-cursor:pointer;
-background:linear-gradient(90deg,#0072ff,#00c6ff);
-color:white;
-transition:0.25s;
-opacity:0.6;
+border-radius:10px;
+background:#334155;
+color:#aaa;
+cursor:not-allowed;
+transition:.3s;
 }
 
 button.active{
-opacity:1;
+background:linear-gradient(90deg,#3b82f6,#22c1ff);
+color:white;
+cursor:pointer;
 transform:scale(1.05);
 }
 
-button:hover{
+button.active:hover{
 transform:scale(1.08);
 }
 
-@keyframes fadeIn{
-from{opacity:0;}
-to{opacity:1;}
+@keyframes fade{
+from{opacity:0}
+to{opacity:1}
 }
 
-@keyframes slideDown{
+@keyframes slide{
 from{
-transform:translateY(-40px);
-opacity:0;
+transform:translateY(-30px);
+opacity:0
 }
 to{
 transform:translateY(0);
-opacity:1;
+opacity:1
 }
 }
 
 @media(max-width:600px){
 .logo{
-font-size:36px;
-}
-.wait{
-font-size:14px;
+font-size:34px;
 }
 }
+
 </style>
 </head>
 
 <body>
 
 <div class="container">
+
 <div class="logo">Welcome to MiraAudio</div>
 <div class="version">v1.0</div>
 
-<div class="wait">Please wait <span id="count">5</span> seconds</div>
-
-<button id="continueBtn">Continue</button>
+<div class="wait">
+Please wait <span id="count">5</span> seconds
 </div>
 
-<audio id="welcomeAudio" src="https://audio.jukehost.co.uk/22z0kp56nmEaZgdWYOvvmbBy0NJjMGBd.mp3"></audio>
+<button id="continueBtn" disabled>Continue</button>
+
+</div>
+
+<audio id="welcomeAudio" preload="auto">
+<source src="https://audio.jukehost.co.uk/22z0kp56nmEaZgdWYOvvmbBy0NJjMGBd.mp3" type="audio/mpeg">
+</audio>
 
 <script>
 
 const audio = document.getElementById("welcomeAudio");
 audio.volume = 0.15;
 
-window.addEventListener("load",()=>{
+let started = false;
+
+function startAudio(){
+if(!started){
 audio.play().catch(()=>{});
-});
+started = true;
+}
+}
+
+document.body.addEventListener("click", startAudio);
 
 let time = 5;
 const count = document.getElementById("count");
 const btn = document.getElementById("continueBtn");
-
-btn.disabled = true;
 
 const timer = setInterval(()=>{
 
@@ -134,21 +146,21 @@ time--;
 count.textContent = time;
 
 if(time <= 0){
+
 clearInterval(timer);
+
+count.textContent = "0";
+
 btn.disabled = false;
 btn.classList.add("active");
-count.textContent = "0";
+
 }
 
 },1000);
 
 btn.onclick = ()=>{
-window.location.href = "index.html";
+window.location.href="index.html";
 };
-
-setTimeout(()=>{
-window.location.href = "index.html";
-},5000);
 
 </script>
 
