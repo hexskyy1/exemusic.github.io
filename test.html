@@ -1,177 +1,314 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>a</title>
+<title>ExeMedia Gallery</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
-body{background:#0f172a;color:white;min-height:100vh;padding:20px;}
-h1{text-align:center;margin-bottom:20px;}
-.container{max-width:900px;margin:auto;}
-.card{background:#1e293b;border-radius:12px;padding:10px;box-shadow:0 0 10px rgba(0,0,0,0.4);transition:.2s;margin-bottom:15px;}
-.card:hover{transform:scale(1.03);}
-.card img{width:100%;height:150px;object-fit:cover;border-radius:8px;}
-.card audio{width:100%;margin-top:5px;}
-.filename{font-size:14px;margin-top:5px;word-break:break-all;}
-.actions{margin-top:8px;display:flex;justify-content:space-between;}
-button{background:#3b82f6;border:none;padding:8px 14px;border-radius:8px;color:white;cursor:pointer;margin:3px;}
-button:hover{background:#2563eb;}
-input, .email-check{padding:8px;border-radius:8px;border:none;margin:5px 0;width:100%;}
-.upload-box, .auth-box{border:2px dashed #3b82f6;padding:20px;border-radius:12px;margin-bottom:20px;background:#1e293b;}
-#gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;}
-.message{margin:5px 0;color:#facc15;font-weight:bold;}
+/* Reset & Fonts */
+* { box-sizing: border-box; margin:0; padding:0; }
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+.container {
+  width: 90%;
+  max-width: 900px;
+  background: #1e293b;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+}
+h1 {
+  text-align:center;
+  margin-bottom:20px;
+}
+
+/* Login */
+#loginDiv {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-bottom:20px;
+}
+#loginDiv input {
+  padding:8px;
+  border-radius:6px;
+  border:none;
+  width:200px;
+}
+#loginDiv button {
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:white;
+  cursor:pointer;
+}
+#loginDiv button:hover { opacity:0.8; }
+
+/* Upload */
+.upload {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+  align-items:center;
+}
+.upload input[type=file] {
+  display:none;
+}
+.upload label {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:50px; height:50px;
+  background:#22c55e;
+  border-radius:50%;
+  cursor:pointer;
+  font-size:28px;
+  font-weight:bold;
+}
+.upload label:hover { opacity:0.8; }
+
+/* Gallery */
+#gallery {
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+  gap:15px;
+}
+.item {
+  background:#334155;
+  border-radius:10px;
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.item img, .item video {
+  width:100%;
+  border-bottom:1px solid #1e293b;
+  max-height:150px;
+  object-fit:cover;
+}
+.item .title {
+  padding:5px;
+  text-align:center;
+  font-size:14px;
+}
+.item .actions {
+  display:flex;
+  gap:5px;
+  margin:5px;
+}
+.item .actions button {
+  padding:5px 8px;
+  font-size:12px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  background:#22c55e;
+  color:white;
+}
+.item .actions button:hover { opacity:0.8; }
+
+/* Player Modal */
+#playerModal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.9);
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  z-index:1000;
+}
+#playerModal video, #playerModal audio {
+  max-width:80%;
+  max-height:60%;
+  margin-bottom:10px;
+  background:#000;
+}
+#playerModal .controls {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  align-items:center;
+}
+#playerModal .controls input[type=range] {
+  width:150px;
+}
+#playerModal button {
+  padding:5px 10px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  background:#22c55e;
+  color:white;
+}
+#playerModal button:hover { opacity:0.8; }
+#playerModal .close {
+  position:absolute;
+  top:20px; right:20px;
+  font-size:25px;
+  cursor:pointer;
+  color:white;
+}
 </style>
 </head>
 <body>
+
 <div class="container">
-<h1>📁 Supabase Media Gallery</h1>
 
-<div class="auth-box" id="authBox">
-<h3>Login / Register</h3>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="register()">Register</button>
+<h1>ExeMedia Gallery</h1>
+
+<!-- Login -->
+<div id="loginDiv">
+<input type="text" id="username" placeholder="Enter your name">
 <button onclick="login()">Login</button>
-<div id="verifyMessage" class="message"></div>
-<button onclick="resendVerification()" id="resendBtn" style="display:none;">Kirim Ulang Verifikasi</button>
-<button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
 </div>
 
-<div class="upload-box" id="uploadBox" style="display:none;">
-<h3>Upload File</h3>
-<input type="file" id="fileInput"><br>
-<button onclick="uploadFile()">Upload</button>
+<!-- Upload -->
+<div class="upload" id="uploadDiv" style="display:none;">
+<label for="fileInput">+</label>
+<input type="file" id="fileInput" multiple accept="audio/*,video/*,image/*">
 </div>
 
+<!-- Gallery -->
 <div id="gallery"></div>
+
+</div>
+
+<!-- Player Modal -->
+<div id="playerModal">
+<span class="close" onclick="closePlayer()">×</span>
+<video id="videoPlayer" controls></video>
+<audio id="audioPlayer" controls></audio>
+<div class="controls">
+<button onclick="prevMedia()">Prev</button>
+<button onclick="playMedia()">Play</button>
+<button onclick="pauseMedia()">Pause</button>
+<button onclick="nextMedia()">Next</button>
+Volume: <input type="range" min="0" max="1" step="0.01" onchange="setVolume(this.value)">
+</div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://hikzgjseckxanetyxqkc.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lRARo_osK1IOcIDegeW-jA_9k39aCto";
-const BUCKET_NAME = "music";
+const supabaseUrl = "https://hikzgjseckxanetyxqkc.supabase.co";
+const supabaseKey = "sb_publishable_lRARo_osK1IOcIDegeW-jA_9k39aCto";
+const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
-// Ganti nama variabel agar tidak bentrok
-const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let mediaList = [];
+let currentIndex = 0;
+let currentType = "audio";
 
-// REGISTER
-async function register(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const { data, error } = await client.auth.signUp({ email, password });
-  if(error){alert(error.message); return;}
-  document.getElementById("verifyMessage").innerText = "Cek email untuk verifikasi!";
-  document.getElementById("resendBtn").style.display = "inline-block";
+const gallery = document.getElementById("gallery");
+const fileInput = document.getElementById("fileInput");
+
+const playerModal = document.getElementById("playerModal");
+const videoPlayer = document.getElementById("videoPlayer");
+const audioPlayer = document.getElementById("audioPlayer");
+
+function login(){
+  const username = document.getElementById("username").value.trim();
+  if(!username) { alert("Enter your name"); return; }
+  document.getElementById("loginDiv").style.display="none";
+  document.getElementById("uploadDiv").style.display="flex";
+  loadMedia();
 }
 
-// RESEND VERIFICATION
-async function resendVerification(){
-  const email = document.getElementById("email").value;
-  const { data, error } = await client.auth.api.sendVerificationEmail(email);
-  if(error){alert(error.message); return;}
-  alert("Link verifikasi sudah dikirim ulang!");
-}
-
-// LOGIN
-async function login(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const { data, error } = await client.auth.signInWithPassword({ email, password });
-  if(error){alert(error.message); return;}
-  checkVerified();
-}
-
-// CHECK EMAIL VERIFIED
-async function checkVerified(){
-  const { data: { user } } = await client.auth.getUser();
-  if(!user) return;
-  if(!user.email_confirmed_at){
-    document.getElementById("verifyMessage").innerText = "Email belum diverifikasi!";
-    document.getElementById("resendBtn").style.display = "inline-block";
-    document.getElementById("uploadBox").style.display = "none";
-    document.getElementById("logoutBtn").style.display = "inline-block";
-  } else {
-    document.getElementById("verifyMessage").innerText = "";
-    document.getElementById("uploadBox").style.display = "block";
-    document.getElementById("authBox").style.display = "none";
-    loadFiles();
-  }
-}
-
-// LOGOUT
-async function logout(){
-  await client.auth.signOut();
-  document.getElementById("authBox").style.display = "block";
-  document.getElementById("uploadBox").style.display = "none";
-  document.getElementById("logoutBtn").style.display = "none";
-  document.getElementById("verifyMessage").innerText = "";
-}
-
-// UPLOAD FILE
-async function uploadFile(){
-  const { data: { user } } = await client.auth.getUser();
-  if(!user.email_confirmed_at){alert("Verifikasi email dulu!"); return;}
-  const file = document.getElementById("fileInput").files[0];
-  if(!file){alert("Pilih file dulu"); return;}
-  const fileName = Date.now() + "_" + file.name;
-  const { error } = await client.storage.from(BUCKET_NAME).upload(fileName, file);
-  if(error){alert("Upload gagal"); console.log(error); return;}
-  loadFiles();
-}
-
-// LOAD FILES
-async function loadFiles(){
-  const { data, error } = await client.storage.from(BUCKET_NAME).list("", { limit:100 });
-  const gallery = document.getElementById("gallery");
-  if(error){gallery.innerHTML="Error load files"; return;}
+/* Load Media */
+async function loadMedia(){
+  const {data,error} = await sb.storage.from("media").list();
+  if(error) { console.log(error); return; }
   gallery.innerHTML="";
-  for(const file of data){
-    const { data:urlData } = client.storage.from(BUCKET_NAME).getPublicUrl(file.name);
-    const url = urlData.publicUrl;
-    let preview="";
-    if(file.name.match(/\.(jpg|png|jpeg|webp|gif)$/i)){
-      preview = `<img src="${url}">`;
-    } else if(file.name.match(/\.(mp3|wav|ogg)$/i)){
-      preview = `<audio controls src="${url}"></audio>`;
-    } else {
-      preview = `<img src="https://cdn-icons-png.flaticon.com/512/716/716784.png">`;
-    }
-    const card = document.createElement("div");
-    card.className="card";
-    card.innerHTML=`
-      ${preview}
-      <div class="filename">${file.name}</div>
-      <div class="actions">
-        <button onclick="downloadFile('${file.name}')">Download</button>
-        <button onclick="deleteFile('${file.name}')">Delete</button>
-      </div>
-    `;
-    gallery.appendChild(card);
+  mediaList=[];
+  data.forEach((file,i)=>{
+    const url = supabaseUrl+"/storage/v1/object/public/media/"+file.name;
+    const type = file.name.match(/\.(mp3|wav|ogg)$/i) ? "audio" :
+                 file.name.match(/\.(mp4|webm|mov)$/i) ? "video" : "image";
+    mediaList.push({url,type,name:file.name});
+    const div = document.createElement("div");
+    div.className="item";
+    if(type=="image") div.innerHTML=`<img src="${url}"><div class="title">${file.name}</div>`;
+    else if(type=="video") div.innerHTML=`<video src="${url}" muted></video><div class="title">${file.name}</div>`;
+    else div.innerHTML=`<div class="title">${file.name}</div>`;
+    const actions = document.createElement("div");
+    actions.className="actions";
+    actions.innerHTML = `<button onclick="playItem(${i})">Play</button>
+                         <button onclick="downloadItem('${url}')">Download</button>
+                         <button onclick="deleteItem('${file.name}')">Delete</button>`;
+    div.appendChild(actions);
+    gallery.appendChild(div);
+  });
+}
+
+/* Upload */
+fileInput.addEventListener("change", async ()=>{
+  const files = Array.from(fileInput.files);
+  for(const file of files){
+    const fileName=Date.now()+"_"+file.name.replace(/[^a-zA-Z0-9.]/g,"_");
+    const {error} = await sb.storage.from("media").upload(fileName,file);
+    if(error) { console.log(error); alert("Upload failed"); continue; }
   }
-}
-
-// DOWNLOAD FILE
-async function downloadFile(name){
-  const { data } = client.storage.from(BUCKET_NAME).getPublicUrl(name);
-  window.open(data.publicUrl, "_blank");
-}
-
-// DELETE FILE
-async function deleteFile(name){
-  if(!confirm("Hapus file ini?")) return;
-  const { error } = await client.storage.from(BUCKET_NAME).remove([name]);
-  if(error){alert("Delete gagal"); return;}
-  loadFiles();
-}
-
-// Cek session otomatis
-client.auth.onAuthStateChange((event, session) => {
-  checkVerified();
+  loadMedia();
 });
 
-checkVerified();
+/* Player */
+function playItem(index){
+  currentIndex=index;
+  const media = mediaList[index];
+  currentType=media.type;
+  if(media.type=="video"){
+    videoPlayer.src=media.url; videoPlayer.style.display="block";
+    audioPlayer.style.display="none";
+  } else if(media.type=="audio"){
+    audioPlayer.src=media.url; audioPlayer.style.display="block";
+    videoPlayer.style.display="none";
+  } else { videoPlayer.style.display="none"; audioPlayer.style.display="none"; return; }
+  playerModal.style.display="flex";
+  if(currentType=="audio") audioPlayer.play();
+  else videoPlayer.play();
+}
+
+function closePlayer(){
+  if(currentType=="audio") audioPlayer.pause();
+  else videoPlayer.pause();
+  playerModal.style.display="none";
+}
+
+function playMedia(){ if(currentType=="audio") audioPlayer.play(); else videoPlayer.play(); }
+function pauseMedia(){ if(currentType=="audio") audioPlayer.pause(); else videoPlayer.pause(); }
+function prevMedia(){ currentIndex=(currentIndex-1+mediaList.length)%mediaList.length; playItem(currentIndex); }
+function nextMedia(){ currentIndex=(currentIndex+1)%mediaList.length; playItem(currentIndex); }
+function setVolume(val){ if(currentType=="audio") audioPlayer.volume=val; else videoPlayer.volume=val; }
+
+/* Download */
+function downloadItem(url){
+  const a=document.createElement("a");
+  a.href=url; a.download=""; a.click();
+}
+
+/* Delete */
+async function deleteItem(fileName){
+  if(!confirm("Delete this file?")) return;
+  const {error}=await sb.storage.from("media").remove([fileName]);
+  if(error) { alert("Delete failed"); console.log(error); return; }
+  loadMedia();
+}
 </script>
+
 </body>
 </html>
