@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Upload Lagu</title>
+<meta charset="UTF-8">
+<title>test</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 <body>
 
 <h2>Upload Lagu</h2>
 
 <input type="file" id="fileInput" accept="audio/*">
-<button onclick="uploadFile()">Upload</button>
+<br><br>
+
+<button id="uploadBtn">Upload</button>
 
 <p id="result"></p>
 
 <script>
 
+// ganti dengan API kamu
 const supabaseUrl = "https://hikzgjseckxanetyxqkc.supabase.co";
 const supabaseKey = "sb_publishable_lRARo_osK1IOcIDegeW-jA_9k39aCto";
 
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-async function uploadFile() {
+document.getElementById("uploadBtn").addEventListener("click", uploadFile);
 
-const file = document.getElementById("fileInput").files[0];
+async function uploadFile(){
+
+const fileInput = document.getElementById("fileInput");
+const file = fileInput.files[0];
 
 if(!file){
 alert("Pilih file dulu");
