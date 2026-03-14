@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ExeMedia Gallery</title>
+<title>a Gallery</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -139,7 +139,7 @@ h1 {
 
 <div class="container">
 
-<h1>ExeMedia Gallery</h1>
+<h1>a Gallery</h1>
 
 <div class="upload">
 <label for="fileInput">+</label>
@@ -167,7 +167,7 @@ Volume: <input type="range" min="0" max="1" step="0.01" onchange="setVolume(this
 <script>
 // Supabase setup
 const supabaseUrl = "https://hikzgjseckxanetyxqkc.supabase.co";
-const supabaseKey = "sb_publishable_lRARo_osK1IOcIDegeW-jA_9k39aCto";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhpa3pnanNlY2t4YW5ldHl4cWtjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzQ4NDMzOCwiZXhwIjoyMDg5MDYwMzM4fQ.CbB0ppny0yshGsJPBCB9qJnGmTNOtZ21SMDFyGb_1mo";
 const sb = supabase.createClient(supabaseUrl, supabaseKey);
 
 let mediaList = [];
