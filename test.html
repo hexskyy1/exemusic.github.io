@@ -8793,36 +8793,46 @@
 
       // Handle file upload mode
       if (uploadMode === 'file') {
-        if (!selectedFile) return msg('Pilih file lagu dulu!');
-        if (isUploading) return msg('Sedang mengupload, tunggu sebentar...');
+        if (!selectedFile) return msg('Pilih file dulu!');
+        if (isUploading) return msg('Sedang upload, tunggu...');
         
-        // Check cooldown for file upload - fetch latest from Firebase
-        let lastUpload = userData.lastUpload || 0;
+        // Get user data for cooldown check - fetch fresh from Firebase
+        const uid = auth.currentUser.uid;
+        let lastUpload = 0;
+        let isAdmin = false;
+        let vipType = null;
+        
         try {
-          const userSnap = await db.ref('users/' + auth.currentUser.uid + '/lastUpload').get();
-          if (userSnap.val()) lastUpload = userSnap.val();
-        } catch (e) { console.log('Using cached lastUpload'); }
+          const userSnap = await db.ref('users/' + uid).get();
+          const freshUserData = userSnap.val();
+          if (freshUserData) {
+            lastUpload = freshUserData.lastUpload || 0;
+            isAdmin = freshUserData.role === 'admin';
+            vipType = freshUserData.vipType || null;
+          }
+        } catch(e) {
+          console.error('Error fetching user data:', e);
+        }
         
         const now = Date.now();
         const diff = (now - lastUpload) / 1000 / 60;
-        const vipType = getVipStatus(userData);
-        const isAdmin = userData.role === 'admin';
         const cooldown = isAdmin ? 0 : (vipType ? 15 : 30);
         
+        // Debug log
+        console.log('File Upload - lastUpload:', lastUpload, 'diff:', diff.toFixed(2), 'cooldown:', cooldown, 'isAdmin:', isAdmin);
+        
         if (!isAdmin && diff < cooldown) {
-          // Calculate remaining cooldown in minutes and seconds
           const remainingMinutes = Math.floor(cooldown - diff);
           const remainingSeconds = Math.floor((cooldown - diff - remainingMinutes) * 60);
           const timeDisplay = remainingMinutes > 0 
             ? `${remainingMinutes}:${remainingSeconds.toString().padStart(2, '0')}` 
             : `0:${remainingSeconds.toString().padStart(2, '0')}`;
-          return msg(`Tunggu ${timeDisplay} lagi sebelum upload!`);
+          return msg(`⏳ Tunggu ${timeDisplay} lagi!`);
         }
         
         isUploading = true;
         const postBtn = document.getElementById('postBtn');
-        postBtn.disabled = true;
-        postBtn.textContent = 'Mengupload...';
+        if (postBtn) { postBtn.disabled = true; postBtn.textContent = 'Mengupload...'; }
 
         try {
           // Upload file to Supabase
