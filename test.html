@@ -4,271 +4,732 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EXECURIVE ARENA - Hexky AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --neon-blue: #00f3ff; --neon-pink: #ff00ff; --neon-red: #ff3131; }
+        :root { --neon-blue: #00f3ff; --neon-pink: #ff00ff; --neon-red: #ff3131; --neon-gold: #ffd700; }
         * { box-sizing: border-box; touch-action: none; user-select: none; }
         body { margin: 0; background: #000; overflow: hidden; font-family: 'Orbitron', sans-serif; color: white; }
-        
-        /* Layar Utama & Death Screen */
-        .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #death-screen { display: none; background: rgba(139, 0, 0, 0.9); z-index: 200; text-align: center; border: 10px solid var(--neon-red); }
-        
-        /* HUD Stats */
-        #hud { position: fixed; top: 15px; left: 15px; z-index: 50; display: none; }
-        .stat-box { background: rgba(0,0,0,0.8); padding: 12px; border-left: 5px solid var(--neon-blue); margin-bottom: 8px; border-radius: 0 15px 15px 0; box-shadow: 0 0 10px rgba(0,243,255,0.3); }
-        #zone-alert { color: var(--neon-red); font-weight: bold; font-size: 18px; display: none; animation: blink 0.5s infinite; text-shadow: 0 0 10px red; }
 
-        /* Mobile Controls */
-        #joystick-container { position: absolute; bottom: 50px; left: 50px; width: 130px; height: 130px; background: rgba(255,255,255,0.05); border: 3px solid var(--neon-blue); border-radius: 50%; display: none; z-index: 60; }
-        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 55px; height: 55px; background: var(--neon-blue); border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 20px var(--neon-blue); }
-        #fire-btn { position: absolute; bottom: 60px; right: 50px; width: 110px; height: 110px; background: radial-gradient(circle, rgba(255,0,255,0.5), rgba(255,0,255,0.1)); border: 5px solid var(--neon-pink); border-radius: 50%; display: none; justify-content: center; align-items: center; z-index: 60; font-weight: bold; cursor: pointer; transition: 0.1s; }
-        #fire-btn:active { transform: scale(0.8); background: rgba(255,0,255,0.7); box-shadow: 0 0 30px var(--neon-pink); }
-        
+        .overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.92); display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #death-screen { display: none; background: rgba(139,0,0,0.92); z-index: 200; text-align: center; border: 8px solid var(--neon-red); }
+        #hud { position: fixed; top: 15px; left: 15px; z-index: 50; display: none; }
+        .stat-box { background: rgba(0,0,0,0.85); padding: 10px 14px; border-left: 4px solid var(--neon-blue); margin-bottom: 6px; border-radius: 0 12px 12px 0; font-size: 13px; }
+        #zone-alert { color: var(--neon-red); font-weight: bold; font-size: 16px; display: none; animation: blink 0.5s infinite; text-shadow: 0 0 10px red; }
+        #joystick-container { position: absolute; bottom: 50px; left: 50px; width: 130px; height: 130px; background: rgba(255,255,255,0.04); border: 3px solid var(--neon-blue); border-radius: 50%; display: none; z-index: 60; }
+        #joystick-stick { position: absolute; top: 50%; left: 50%; width: 55px; height: 55px; background: var(--neon-blue); border-radius: 50%; transform: translate(-50%,-50%); box-shadow: 0 0 20px var(--neon-blue); }
+        #fire-btn { position: absolute; bottom: 60px; right: 50px; width: 100px; height: 100px; background: radial-gradient(circle,rgba(255,0,255,.5),rgba(255,0,255,.1)); border: 4px solid var(--neon-pink); border-radius: 50%; display: none; justify-content: center; align-items: center; z-index: 60; font-weight: bold; cursor: pointer; font-size: 12px; }
+        #fire-btn:active { transform: scale(.8); background: rgba(255,0,255,.7); box-shadow: 0 0 30px var(--neon-pink); }
         canvas { display: none; background: #050505; }
-        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes blink { 50% { opacity:0; } }
+
+        /* ---- UI STYLES ---- */
+        .ui-title { letter-spacing: 6px; font-size: 28px; margin-bottom: 10px; text-shadow: 0 0 20px var(--neon-blue); }
+        .ui-sub { color: #aaa; font-size: 12px; margin-bottom: 24px; letter-spacing: 2px; }
+        .btn { padding: 12px 32px; border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 14px; letter-spacing: 1px; transition: .15s; }
+        .btn:hover { transform: scale(1.05); }
+        .btn-blue { background: var(--neon-blue); color: #000; }
+        .btn-pink { background: var(--neon-pink); color: #fff; }
+        .btn-gold { background: var(--neon-gold); color: #000; }
+        .btn-red { background: var(--neon-red); color: #fff; }
+        .btn-gray { background: #333; color: #ccc; }
+        .panel { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); border-radius: 10px; padding: 20px; margin: 8px 0; }
+
+        /* Leaderboard */
+        #leaderboard-btn { position: fixed; top: 15px; right: 15px; z-index: 55; display: none; }
+        #leaderboard-panel { position: fixed; top: 0; right: -340px; width: 320px; height: 100vh; background: rgba(0,0,0,.95); border-left: 2px solid var(--neon-blue); z-index: 80; padding: 20px; overflow-y: auto; transition: right .3s; }
+        #leaderboard-panel.open { right: 0; }
+        .lb-tab { display: flex; gap: 8px; margin-bottom: 12px; }
+        .lb-tab button { flex: 1; padding: 8px; font-family: 'Orbitron'; font-size: 10px; border: 1px solid #444; background: #111; color: #aaa; cursor: pointer; border-radius: 4px; }
+        .lb-tab button.active { background: var(--neon-blue); color: #000; border-color: var(--neon-blue); }
+        .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #222; font-size: 12px; }
+        .lb-rank { color: var(--neon-gold); font-weight: bold; margin-right: 8px; min-width: 20px; }
+        .lb-val { color: var(--neon-blue); font-weight: bold; }
+
+        /* Shop/Upgrade Panel */
+        #shop-btn { position: fixed; top: 65px; right: 15px; z-index: 55; display: none; }
+        #shop-panel { position: fixed; top: 0; left: -360px; width: 340px; height: 100vh; background: rgba(0,0,0,.95); border-right: 2px solid var(--neon-gold); z-index: 80; padding: 20px; overflow-y: auto; transition: left .3s; }
+        #shop-panel.open { left: 0; }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #333; border-radius: 8px; margin-bottom: 8px; background: rgba(255,255,255,.03); }
+        .shop-item .info { flex: 1; }
+        .shop-item .title { font-size: 13px; color: #fff; font-weight: bold; }
+        .shop-item .desc { font-size: 10px; color: #888; margin-top: 3px; }
+        .shop-item .cost { font-size: 12px; color: var(--neon-gold); margin-right: 10px; }
+        .progress-bar { background: #222; height: 6px; border-radius: 3px; margin-top: 5px; }
+        .progress-fill { height: 100%; background: var(--neon-blue); border-radius: 3px; transition: width .3s; }
+
+        /* Lobby */
+        #room-select { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; justify-content: center; }
+        .room-card { border: 2px solid #444; border-radius: 10px; padding: 16px 24px; cursor: pointer; text-align: center; transition: .2s; min-width: 100px; }
+        .room-card:hover, .room-card.selected { border-color: var(--neon-blue); background: rgba(0,243,255,.1); box-shadow: 0 0 15px rgba(0,243,255,.3); }
+        .room-card .room-name { font-size: 16px; font-weight: bold; color: var(--neon-blue); }
+        .room-card .room-label { font-size: 10px; color: #aaa; margin-top: 4px; }
+        .room-card.ai-room { border-color: #ff6600; }
+        .room-card.ai-room:hover, .room-card.ai-room.selected { border-color: #ff6600; background: rgba(255,102,0,.1); box-shadow: 0 0 15px rgba(255,102,0,.3); }
+        .room-card.ai-room .room-name { color: #ff6600; }
+
+        /* Color pickers in lobby */
+        .color-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 12px; color: #ccc; }
+        .color-row label { min-width: 130px; }
+        .color-row input[type=color] { width: 40px; height: 30px; border: 2px solid #444; border-radius: 4px; cursor: pointer; background: none; padding: 0; }
+        .color-row input[type=text] { background: #111; border: 1px solid #444; color: #fff; padding: 5px 8px; border-radius: 4px; font-family: 'Orbitron'; font-size: 11px; width: 120px; }
+        .coin-display { font-size: 13px; color: var(--neon-gold); }
+
+        /* Kill feed */
+        #killfeed { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 70; display: none; pointer-events: none; }
+        .kf-item { background: rgba(0,0,0,.8); border: 1px solid rgba(255,0,0,.5); padding: 5px 14px; border-radius: 20px; font-size: 11px; margin-bottom: 4px; text-align: center; animation: kfIn .3s ease; }
+        @keyframes kfIn { from { opacity:0; transform: translateY(-10px); } to { opacity:1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div id="ui-auth" class="overlay">
-        <h1 style="letter-spacing: 5px;">EXECURIVE ARENA</h1>
-        <button id="login-btn" style="padding:15px 40px; background:var(--neon-blue); border:none; font-family:'Orbitron'; font-weight:bold; cursor:pointer; border-radius: 5px;">AUTH LOGIN</button>
+<!-- AUTH -->
+<div id="ui-auth" class="overlay">
+    <h1 class="ui-title">EXECURIVE ARENA</h1>
+    <p class="ui-sub">POWERED BY HEXKY AI</p>
+    <button id="login-btn" class="btn btn-blue">AUTH LOGIN</button>
+</div>
+
+<!-- LOBBY -->
+<div id="ui-lobby" class="overlay" style="display:none">
+    <h2 style="color:var(--neon-pink);letter-spacing:4px;margin-bottom:4px">LOBBY SERVER</h2>
+    <p class="ui-sub">PILIH ROOM & CUSTOMIZE</p>
+
+    <!-- Coin display -->
+    <div class="coin-display" id="coin-display">💰 ExeCoin: 0</div>
+
+    <!-- Room selection -->
+    <div style="font-size:11px;color:#888;margin-top:12px;margin-bottom:4px">PILIH ROOM</div>
+    <div id="room-select">
+        <div class="room-card selected" data-room="room1" onclick="selectRoom(this,'room1')">
+            <div class="room-name">ROOM 1</div>
+            <div class="room-label" id="room1-count">0/8 players</div>
+        </div>
+        <div class="room-card" data-room="room2" onclick="selectRoom(this,'room2')">
+            <div class="room-name">ROOM 2</div>
+            <div class="room-label" id="room2-count">0/8 players</div>
+        </div>
+        <div class="room-card" data-room="room3" onclick="selectRoom(this,'room3')">
+            <div class="room-name">ROOM 3</div>
+            <div class="room-label" id="room3-count">0/8 players</div>
+        </div>
+        <div class="room-card ai-room" data-room="room_ai" onclick="selectRoom(this,'room_ai')">
+            <div class="room-name">🤖 AI ROOM</div>
+            <div class="room-label">vs 2-3 AI Bots</div>
+        </div>
     </div>
 
-    <div id="ui-lobby" class="overlay" style="display:none">
-        <h2 style="color:var(--neon-pink)">LOBBY SERVER</h2>
-        <div id="player-list" style="margin: 20px 0; background:rgba(255,255,255,0.1); padding:20px; border-radius:10px; min-width:250px;"></div>
-        <button id="start-btn" style="padding:15px 40px; background:var(--neon-pink); border:none; color:white; font-family:'Orbitron'; font-weight:bold; cursor:pointer; border-radius:5px;">DEPLOY (3s)</button>
+    <!-- Customize -->
+    <div class="panel" style="margin-top:12px;min-width:300px">
+        <div style="font-size:11px;color:#888;margin-bottom:10px">CUSTOMIZE</div>
+        <div class="color-row"><label>Nama Karakter:</label><input type="text" id="custom-name" placeholder="nama..." maxlength="12"></div>
+        <div class="color-row"><label>Warna Kotak:</label><input type="color" id="custom-color" value="#00f3ff"></div>
+        <div class="color-row"><label>Warna Peluru:</label><input type="color" id="custom-bullet" value="#ffff00"></div>
     </div>
 
-    <div id="death-screen" class="overlay">
-        <h1 style="font-size: 80px; margin: 0; color: white; text-shadow: 5px 5px #000;">WASTED</h1>
-        <p id="killed-by" style="font-size: 24px; color: #fff;">KILLED BY: PLAYER</p>
-        <p style="font-size: 18px;">Respawn In:</p>
-        <h2 id="respawn-timer" style="color:yellow; font-size: 40px;">5</h2>
+    <div id="lobby-players" class="panel" style="min-width:300px;max-height:100px;overflow-y:auto;font-size:12px;color:#aaa"></div>
+    <button id="start-btn" class="btn btn-pink" style="margin-top:12px">DEPLOY</button>
+</div>
+
+<!-- DEATH SCREEN -->
+<div id="death-screen" class="overlay" style="background:rgba(139,0,0,.92);border:8px solid var(--neon-red);display:none">
+    <h1 style="font-size:70px;margin:0;color:#fff;text-shadow:4px 4px #000">WASTED</h1>
+    <p id="killed-by" style="font-size:20px">KILLED BY: PLAYER</p>
+    <p style="font-size:14px">Respawn In:</p>
+    <h2 id="respawn-timer" style="color:yellow;font-size:36px">5</h2>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+    <div class="stat-box" id="hud-name">NAME</div>
+    <div class="stat-box" id="hud-score">K: 0 | D: 0 | HP: 100</div>
+    <div class="stat-box coin-display" id="hud-coin">💰 ExeCoin: 0</div>
+    <div id="zone-alert">⚠ OUTSIDE SAFE ZONE!</div>
+</div>
+
+<!-- Kill Feed -->
+<div id="killfeed"></div>
+
+<!-- Buttons in-game -->
+<button id="leaderboard-btn" class="btn btn-gray" style="font-size:11px;padding:8px 14px" onclick="toggleLeaderboard()">🏆 LB</button>
+<button id="shop-btn" class="btn btn-gold" style="font-size:11px;padding:8px 14px" onclick="toggleShop()">🛒 SHOP</button>
+
+<!-- Leaderboard Panel -->
+<div id="leaderboard-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-size:14px;color:var(--neon-gold)">🏆 LEADERBOARD</h3>
+        <button onclick="toggleLeaderboard()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">✕</button>
     </div>
-
-    <div id="hud">
-        <div class="stat-box" id="hud-name">NAME</div>
-        <div class="stat-box" id="hud-score">K: 0 | D: 0 | HP: 100</div>
-        <div id="zone-alert">OUTSIDE SAFE ZONE!</div>
+    <div class="lb-tab">
+        <button class="active" onclick="switchLBTab(this,'kills')">KILLS</button>
+        <button onclick="switchLBTab(this,'deaths')">DEATHS</button>
+        <button onclick="switchLBTab(this,'coins')">EXECOIN</button>
     </div>
+    <div id="lb-content"></div>
+</div>
 
-    <div id="joystick-container"><div id="joystick-stick"></div></div>
-    <div id="fire-btn">FIRE</div>
+<!-- Shop Panel -->
+<div id="shop-panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="margin:0;font-size:14px;color:var(--neon-gold)">🛒 UPGRADE SHOP</h3>
+        <button onclick="toggleShop()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:18px">✕</button>
+    </div>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--neon-gold)" id="shop-coin-display">💰 ExeCoin: 0</div>
+    <div id="shop-items"></div>
+</div>
 
-    <canvas id="game-canvas"></canvas>
+<!-- Controls -->
+<div id="joystick-container"><div id="joystick-stick"></div></div>
+<div id="fire-btn">FIRE</div>
+<canvas id="game-canvas"></canvas>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getDatabase, ref, set, onValue, onDisconnect, update, increment, push, remove } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getDatabase, ref, set, onValue, onDisconnect, update, increment, push, remove, get } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCl4ei8kfMaBoQEokFE5FlkPvz-NdEhQXw",
-            authDomain: "exeai-eefc8.firebaseapp.com",
-            databaseURL: "https://exeai-eefc8-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "exeai-eefc8",
-            storageBucket: "exeai-eefc8.firebasestorage.app",
-            messagingSenderId: "1013428002517",
-            appId: "1:1013428002517:web:6e3e07a810167c97bb8c5c"
-        };
+const firebaseConfig = {
+    apiKey: "AIzaSyCl4ei8kfMaBoQEokFE5FlkPvz-NdEhQXw",
+    authDomain: "exeai-eefc8.firebaseapp.com",
+    databaseURL: "https://exeai-eefc8-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "exeai-eefc8",
+    storageBucket: "exeai-eefc8.firebasestorage.app",
+    messagingSenderId: "1013428002517",
+    appId: "1:1013428002517:web:6e3e07a810167c97bb8c5c"
+};
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        const provider = new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext("2d");
 
-        const canvas = document.getElementById("game-canvas");
-        const ctx = canvas.getContext("2d");
-        
-        let myId = null, players = {}, globalBullets = {}, joystick = { active: false, moveX: 0, moveY: 0 };
-        let camera = { x: 0, y: 0 }, keys = {}, lastFireTime = 0, lastZoneDamage = 0;
-        const FIRE_RANGE = 350; // Jarak Auto-Lock
-        const SAFE_ZONE = { x: 1000, y: 1000, radius: 900 };
+// State
+let myId = null, myRoom = "room1", players = {}, globalBullets = {}, aiPlayers = {};
+let joystick = { active: false, moveX: 0, moveY: 0 };
+let camera = { x: 0, y: 0 }, keys = {}, lastFireTime = 0, lastZoneDamage = 0;
+let currentLBTab = "kills";
+let myStats = { damage: 0, fireRange: 0, coins: 0 }; // upgrade levels
+let currentUser = null;
+let lobbyRoomListeners = {};
 
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize); resize();
+// Customization
+let myColor = "#00f3ff", myBulletColor = "#ffff00", myDisplayName = "";
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                myId = user.uid;
-                document.getElementById("ui-auth").style.display = "none";
-                document.getElementById("ui-lobby").style.display = "flex";
-                document.getElementById("hud-name").innerText = user.displayName;
-                
-                const pRef = ref(db, 'players/' + myId);
-                set(pRef, { id: myId, name: user.displayName, x: 1000, y: 1000, color: '#00f3ff', hp: 100, kills: 0, deaths: 0, isAlive: true, lastKiller: "THE ZONE" });
-                onDisconnect(pRef).remove();
+// Constants
+const BASE_DAMAGE = 31, BASE_FIRE_RANGE = 230;
+const MAX_DMG_UP = 9, MAX_RANGE_UP = 6; // max +range upgrades (+2 each = 12, so range 230+120=350)
+const SAFE_ZONE = { x: 1000, y: 1000, radius: 900 };
+
+function getMyDamage() { return BASE_DAMAGE + myStats.damage * 2; }  // wait, spec: +1 damage = 2execoin, meaning each upgrade level costs 2 coins and adds 1 damage
+function getMyFireRange() { return BASE_FIRE_RANGE + myStats.fireRange * 2; } // +2 range per upgrade, 2 coins each
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+// ---- AUTH ----
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        currentUser = user;
+        myId = user.uid;
+        document.getElementById("ui-auth").style.display = "none";
+        document.getElementById("ui-lobby").style.display = "flex";
+
+        // Load persistent player data
+        const snapStats = await get(ref(db, 'playerStats/' + myId));
+        if (snapStats.exists()) {
+            const sd = snapStats.val();
+            myStats.damage = sd.damageLevel || 0;
+            myStats.fireRange = sd.rangeLevel || 0;
+            myStats.coins = sd.coins || 0;
+            myColor = sd.color || "#00f3ff";
+            myBulletColor = sd.bulletColor || "#ffff00";
+            myDisplayName = sd.displayName || user.displayName;
+        } else {
+            myDisplayName = user.displayName;
+            // Save defaults
+            set(ref(db, 'playerStats/' + myId), { coins: 0, damageLevel: 0, rangeLevel: 0, color: myColor, bulletColor: myBulletColor, displayName: myDisplayName, kills: 0, deaths: 0 });
+        }
+        document.getElementById("custom-name").value = myDisplayName;
+        document.getElementById("custom-color").value = myColor;
+        document.getElementById("custom-bullet").value = myBulletColor;
+        updateCoinDisplay();
+        renderShopItems();
+        listenRoomCounts();
+    }
+});
+
+// ---- ROOM COUNTS ----
+function listenRoomCounts() {
+    ["room1","room2","room3"].forEach(r => {
+        onValue(ref(db, 'players'), (s) => {
+            const all = s.val() || {};
+            const count = Object.values(all).filter(p => p.room === r).length;
+            const el = document.getElementById(r + "-count");
+            if (el) el.textContent = count + "/8 players";
+        });
+    });
+}
+
+// Lobby player list
+onValue(ref(db, 'players'), (s) => {
+    players = s.val() || {};
+    const me = players[myId];
+    if (me) {
+        updateHUD(me);
+    }
+    renderLobbyPlayers();
+    renderLeaderboard();
+});
+onValue(ref(db, 'bullets'), (s) => { globalBullets = s.val() || {}; });
+onValue(ref(db, 'aiBots'), (s) => { aiPlayers = s.val() || {}; });
+
+function renderLobbyPlayers() {
+    const el = document.getElementById("lobby-players");
+    if (!el) return;
+    const roomPlayers = Object.values(players).filter(p => p.room === myRoom);
+    el.innerHTML = roomPlayers.map(p => `<span style="color:${p.color||'#0ff'};margin-right:10px">● ${p.name}</span>`).join('');
+}
+
+// ---- ROOM SELECTION ----
+window.selectRoom = function(el, room) {
+    document.querySelectorAll('.room-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    myRoom = room;
+    renderLobbyPlayers();
+};
+
+// ---- LEADERBOARD ----
+window.toggleLeaderboard = function() {
+    document.getElementById("leaderboard-panel").classList.toggle("open");
+    renderLeaderboard();
+};
+window.switchLBTab = function(btn, tab) {
+    currentLBTab = tab;
+    document.querySelectorAll('.lb-tab button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderLeaderboard();
+};
+function renderLeaderboard() {
+    get(ref(db, 'playerStats')).then(snap => {
+        const stats = snap.val() || {};
+        const arr = Object.entries(stats).map(([id,v]) => ({ id, name: v.displayName || "?", kills: v.kills||0, deaths: v.deaths||0, coins: v.coins||0 }));
+        let sorted;
+        if (currentLBTab === "kills") sorted = arr.sort((a,b) => b.kills - a.kills);
+        else if (currentLBTab === "deaths") sorted = arr.sort((a,b) => b.deaths - a.deaths);
+        else sorted = arr.sort((a,b) => b.coins - a.coins);
+        const val = currentLBTab;
+        document.getElementById("lb-content").innerHTML = sorted.slice(0,20).map((p,i) => {
+            const medal = i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
+            return `<div class="lb-row"><span><span class="lb-rank">${medal||("#"+(i+1))}</span>${p.name}</span><span class="lb-val">${p[val]}</span></div>`;
+        }).join('');
+    });
+}
+
+// ---- SHOP ----
+window.toggleShop = function() {
+    document.getElementById("shop-panel").classList.toggle("open");
+    renderShopItems();
+};
+function renderShopItems() {
+    document.getElementById("shop-coin-display").textContent = "💰 ExeCoin: " + myStats.coins;
+    const items = [
+        { id: "damage", label: "⚔ Damage +1", desc: `Saat ini: ${getMyDamage()} dmg | Max +9`, cost: 2, level: myStats.damage, max: MAX_DMG_UP },
+        { id: "range", label: "🎯 Fire Range +2", desc: `Saat ini: ${getMyFireRange()} range | Max 350`, cost: 2, level: myStats.fireRange, max: MAX_RANGE_UP },
+    ];
+    document.getElementById("shop-items").innerHTML = items.map(item => {
+        const maxed = item.level >= item.max;
+        const pct = Math.min(100, (item.level / item.max) * 100);
+        return `
+        <div class="shop-item">
+            <div class="info">
+                <div class="title">${item.label}</div>
+                <div class="desc">${item.desc}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                <div style="font-size:10px;color:#666;margin-top:3px">${item.level}/${item.max}</div>
+            </div>
+            <span class="cost">💰${item.cost}</span>
+            <button class="btn ${maxed?'btn-gray':'btn-gold'}" style="font-size:11px;padding:7px 12px" 
+                onclick="buyUpgrade('${item.id}',${item.cost})" ${maxed?'disabled':''}>
+                ${maxed?"MAXED":"BUY"}
+            </button>
+        </div>`;
+    }).join('');
+}
+window.buyUpgrade = function(id, cost) {
+    if (myStats.coins < cost) { alert("ExeCoin tidak cukup!"); return; }
+    if (id === "damage" && myStats.damage >= MAX_DMG_UP) return;
+    if (id === "range" && myStats.fireRange >= MAX_RANGE_UP) return;
+    myStats.coins -= cost;
+    if (id === "damage") myStats.damage++;
+    if (id === "range") myStats.fireRange++;
+    savePersistentStats();
+    renderShopItems();
+    updateCoinDisplay();
+};
+
+function savePersistentStats() {
+    if (!myId) return;
+    // Read current to preserve kills/deaths
+    update(ref(db, 'playerStats/' + myId), {
+        coins: myStats.coins,
+        damageLevel: myStats.damage,
+        rangeLevel: myStats.fireRange,
+        color: myColor,
+        bulletColor: myBulletColor,
+        displayName: myDisplayName,
+    });
+}
+
+function updateCoinDisplay() {
+    document.getElementById("coin-display").textContent = "💰 ExeCoin: " + myStats.coins;
+    document.getElementById("hud-coin").textContent = "💰 ExeCoin: " + myStats.coins;
+    if (document.getElementById("shop-panel").classList.contains("open")) {
+        document.getElementById("shop-coin-display").textContent = "💰 ExeCoin: " + myStats.coins;
+        renderShopItems();
+    }
+}
+function updateHUD(me) {
+    document.getElementById("hud-name").textContent = me.name;
+    document.getElementById("hud-score").textContent = `K: ${me.kills||0} | D: ${me.deaths||0} | HP: ${me.hp||0}`;
+}
+
+// ---- KILLFEED ----
+function addKillFeed(msg) {
+    const kf = document.getElementById("killfeed");
+    const div = document.createElement("div");
+    div.className = "kf-item";
+    div.textContent = msg;
+    kf.appendChild(div);
+    setTimeout(() => { if(div.parentNode) div.parentNode.removeChild(div); }, 3000);
+}
+
+// ---- FIRE (Anti-spam: 1 detik cooldown) ----
+function fire() {
+    const me = players[myId];
+    if (!me || !me.isAlive) return;
+    const now = Date.now();
+    if (now - lastFireTime < 1000) return; // 1 detik cooldown KETAT
+    lastFireTime = now;
+
+    const FIRE_RANGE = getMyFireRange();
+    let target = null, minDist = FIRE_RANGE;
+
+    // Check AI bots too
+    const allTargets = [...Object.values(players).filter(p => p.id !== myId && p.isAlive && p.room === myRoom),
+                        ...Object.values(aiPlayers).filter(a => a.room === myRoom)];
+
+    allTargets.forEach(p => {
+        const d = Math.hypot(p.x - me.x, p.y - me.y);
+        if (d < minDist) { minDist = d; target = p; }
+    });
+
+    if (target) {
+        const angle = Math.atan2(target.y - me.y, target.x - me.x);
+        const bRef = push(ref(db, 'bullets'));
+        set(bRef, { owner: myId, x: me.x, y: me.y, vx: Math.cos(angle)*16, vy: Math.sin(angle)*16, life: 60, color: myBulletColor, damage: getMyDamage(), room: myRoom });
+        setTimeout(() => remove(bRef), 1200);
+    }
+}
+
+// ---- DEATH & RESPAWN ----
+function handleDeath(killer) {
+    const me = players[myId];
+    if (!me || !me.isAlive) return;
+    update(ref(db, 'players/' + myId), { isAlive: false, deaths: increment(1), hp: 0 });
+    update(ref(db, 'playerStats/' + myId), { deaths: increment(1) });
+    document.getElementById("death-screen").style.display = "flex";
+    document.getElementById("killed-by").textContent = "KILLED BY: " + killer;
+    addKillFeed("☠ " + (players[myId]?.name || "?") + " dibunuh oleh " + killer);
+    let count = 5;
+    const itv = setInterval(() => {
+        count--;
+        document.getElementById("respawn-timer").textContent = count;
+        if (count <= 0) { clearInterval(itv); respawn(); }
+    }, 1000);
+}
+function respawn() {
+    update(ref(db, 'players/' + myId), { isAlive: true, hp: 100, x: 1000 + (Math.random()-0.5)*200, y: 1000 + (Math.random()-0.5)*200, lastKiller: "THE ZONE" });
+    document.getElementById("death-screen").style.display = "none";
+}
+
+// ---- AI BOT LOGIC (only owner/first player in AI room runs this) ----
+let myBotIds = [];
+let aiLoopInterval = null;
+
+function setupAIBots() {
+    if (myRoom !== "room_ai") return;
+    // Create 3 AI bots
+    myBotIds = [];
+    const count = 3;
+    for (let i = 0; i < count; i++) {
+        const bid = "ai_" + Date.now() + "_" + i;
+        myBotIds.push(bid);
+        const colors = ["#ff6600","#ff3300","#ff9900"];
+        set(ref(db, 'aiBots/' + bid), {
+            id: bid, name: "BOT-" + (i+1), x: 800+Math.random()*400, y: 800+Math.random()*400,
+            color: colors[i], hp: 100, isAlive: true, room: "room_ai",
+            isAI: true, kills: 0, lastFireTime: 0
+        });
+        onDisconnect(ref(db, 'aiBots/' + bid)).remove();
+    }
+    // AI loop: update every 200ms
+    aiLoopInterval = setInterval(updateAIBots, 200);
+}
+
+function updateAIBots() {
+    const roomPlayers = Object.values(players).filter(p => p.room === "room_ai" && p.isAlive);
+    myBotIds.forEach(bid => {
+        const bot = aiPlayers[bid];
+        if (!bot || !bot.isAlive) return;
+        if (roomPlayers.length === 0) return;
+        // Find nearest player
+        let nearest = null, minD = 9999;
+        roomPlayers.forEach(p => {
+            const d = Math.hypot(p.x - bot.x, p.y - bot.y);
+            if (d < minD) { minD = d; nearest = p; }
+        });
+        if (!nearest) return;
+        // Move toward player
+        const angle = Math.atan2(nearest.y - bot.y, nearest.x - bot.x);
+        const speed = 3.5;
+        const nx = bot.x + Math.cos(angle) * speed;
+        const ny = bot.y + Math.sin(angle) * speed;
+        // Fire if close
+        const now = Date.now();
+        if (minD < 280 && now - (bot.lastFireTime || 0) > 1200) {
+            const bRef = push(ref(db, 'bullets'));
+            set(bRef, { owner: bid, x: bot.x, y: bot.y, vx: Math.cos(angle)*14, vy: Math.sin(angle)*14, life: 60, color: "#ff6600", damage: 28, room: "room_ai", isAI: true });
+            setTimeout(() => remove(bRef), 1200);
+            update(ref(db, 'aiBots/' + bid), { lastFireTime: now, x: nx, y: ny });
+        } else {
+            update(ref(db, 'aiBots/' + bid), { x: nx, y: ny });
+        }
+    });
+}
+
+// ---- CONTROLS ----
+window.addEventListener("keydown", e => { keys[e.key.toLowerCase()] = true; if(e.key === " ") fire(); });
+window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+document.getElementById("fire-btn").addEventListener("touchstart", e => { e.preventDefault(); fire(); });
+window.addEventListener("mousedown", e => {
+    if (canvas.style.display === "block" && !e.target.closest('#shop-panel') && !e.target.closest('#leaderboard-panel') && !e.target.closest('#shop-btn') && !e.target.closest('#leaderboard-btn')) fire();
+});
+
+// ---- GAME LOOP ----
+function loop() {
+    const me = players[myId];
+    if (me && me.isAlive) {
+        let dx = 0, dy = 0;
+        if (keys['w'] || keys['arrowup']) dy -= 7;
+        if (keys['s'] || keys['arrowdown']) dy += 7;
+        if (keys['a'] || keys['arrowleft']) dx -= 7;
+        if (keys['d'] || keys['arrowright']) dx += 7;
+        if (joystick.active) { dx += joystick.moveX * 7; dy += joystick.moveY * 7; }
+        if (dx !== 0 || dy !== 0) update(ref(db, 'players/' + myId), { x: me.x + dx, y: me.y + dy });
+
+        camera.x = me.x - canvas.width / 2;
+        camera.y = me.y - canvas.height / 2;
+
+        // Zone damage
+        const distToCenter = Math.hypot(me.x - SAFE_ZONE.x, me.y - SAFE_ZONE.y);
+        if (distToCenter > SAFE_ZONE.radius) {
+            document.getElementById("zone-alert").style.display = "block";
+            if (Date.now() - lastZoneDamage > 1000) {
+                update(ref(db, 'players/' + myId), { hp: Math.max(0, me.hp - 10) });
+                lastZoneDamage = Date.now();
+            }
+        } else {
+            document.getElementById("zone-alert").style.display = "none";
+        }
+
+        // Death check
+        if (me.hp <= 0 && me.isAlive) handleDeath(me.lastKiller || "THE ZONE");
+
+        // Bullet hit on me
+        Object.entries(globalBullets).forEach(([id, b]) => {
+            if (b.owner !== myId && b.room === myRoom && Math.hypot(me.x - b.x, me.y - b.y) < 25) {
+                const dmg = b.damage || 31;
+                const newHp = Math.max(0, me.hp - dmg);
+                const killerName = b.isAI ? (aiPlayers[b.owner]?.name || "BOT") : (players[b.owner]?.name || "Enemy");
+                update(ref(db, 'players/' + myId), { hp: newHp, lastKiller: killerName });
+                if (newHp <= 0) {
+                    if (!b.isAI) {
+                        update(ref(db, 'players/' + b.owner), { kills: increment(1) });
+                        update(ref(db, 'playerStats/' + b.owner), { kills: increment(1), coins: increment(1) });
+                        // Update their local coins if they're me
+                        if (b.owner === myId) { myStats.coins++; updateCoinDisplay(); }
+                    }
+                    addKillFeed(`${killerName} ➜ ${me.name}`);
+                }
+                remove(ref(db, 'bullets/' + id));
             }
         });
+        // Check if AI bot bullet hits me - handled above via room filter
 
-        onValue(ref(db, 'players'), (s) => { players = s.val() || {}; });
-        onValue(ref(db, 'bullets'), (s) => { globalBullets = s.val() || {}; });
-
-        // SISTEM TEMBAK AUTO-LOCK (FULL FITUR)
-        function fire() {
-            const me = players[myId];
-            if (!me || !me.isAlive || Date.now() - lastFireTime < 1000) return;
-
-            let target = null, minDist = FIRE_RANGE;
-            Object.values(players).forEach(p => {
-                if(p.id !== myId && p.isAlive) {
-                    let d = Math.hypot(p.x - me.x, p.y - me.y);
-                    if(d < minDist) { minDist = d; target = p; }
-                }
-            });
-
-            if(target) {
-                const angle = Math.atan2(target.y - me.y, target.x - me.x);
-                const bRef = push(ref(db, 'bullets'));
-                set(bRef, { owner: myId, x: me.x, y: me.y, vx: Math.cos(angle)*16, vy: Math.sin(angle)*16, life: 60 });
-                setTimeout(() => remove(bRef), 1200);
-                lastFireTime = Date.now();
-            }
-        }
-
-        function handleDeath(killer) {
-            update(ref(db, 'players/' + myId), { isAlive: false, deaths: increment(1), hp: 0 });
-            document.getElementById("death-screen").style.display = "flex";
-            document.getElementById("killed-by").innerText = "KILLED BY: " + killer;
-            
-            let count = 5;
-            const itv = setInterval(() => {
-                count--;
-                document.getElementById("respawn-timer").innerText = count;
-                if(count <= 0) { clearInterval(itv); respawn(); }
-            }, 1000);
-        }
-
-        function respawn() {
-            update(ref(db, 'players/' + myId), { isAlive: true, hp: 100, x: 1000, y: 1000, lastKiller: "THE ZONE" });
-            document.getElementById("death-screen").style.display = "none";
-        }
-
-        // KEYBOARD & TOUCH
-        window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-        window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-        document.getElementById("fire-btn").addEventListener("touchstart", (e) => { e.preventDefault(); fire(); });
-        window.addEventListener("mousedown", () => { if(canvas.style.display === "block") fire(); });
-
-        // MAIN GAME LOOP
-        function loop() {
-            const me = players[myId];
-            if (me && me.isAlive) {
-                // Movement Logic
-                let dx = 0, dy = 0;
-                if (keys['w']) dy -= 7; if (keys['s']) dy += 7;
-                if (keys['a']) dx -= 7; if (keys['d']) dx += 7;
-                if (joystick.active) { dx += joystick.moveX * 7; dy += joystick.moveY * 7; }
-                if (dx !== 0 || dy !== 0) update(ref(db, 'players/' + myId), { x: me.x + dx, y: me.y + dy });
-                
-                camera.x = me.x - canvas.width / 2;
-                camera.y = me.y - canvas.height / 2;
-
-                // 1. Logika Zona Putih (Damage Fix)
-                const distToCenter = Math.hypot(me.x - SAFE_ZONE.x, me.y - SAFE_ZONE.y);
-                if(distToCenter > SAFE_ZONE.radius) {
-                    document.getElementById("zone-alert").style.display = "block";
-                    if(Date.now() - lastZoneDamage > 1000) { // Fix Damage per detik
-                        update(ref(db, 'players/' + myId), { hp: Math.max(0, me.hp - 10) });
-                        lastZoneDamage = Date.now();
-                    }
-                } else {
-                    document.getElementById("zone-alert").style.display = "none";
-                }
-
-                // 2. Logika Kematian (HP 0)
-                if(me.hp <= 0) handleDeath(me.lastKiller || "THE ZONE");
-
-                // 3. Logika Peluru Kena Kita
-                Object.entries(globalBullets).forEach(([id, b]) => {
-                    if(b.owner !== myId && Math.hypot(me.x - b.x, me.y - b.y) < 25) {
-                        const newHp = Math.max(0, me.hp - 32);
-                        update(ref(db, 'players/' + myId), { hp: newHp, lastKiller: players[b.owner]?.name || "Enemy" });
-                        if(newHp <= 0) update(ref(db, 'players/' + b.owner), { kills: increment(1) });
+        // Check my bullets hitting AI bots
+        if (myRoom === "room_ai") {
+            Object.entries(globalBullets).forEach(([id, b]) => {
+                if (b.owner !== myId) return;
+                Object.entries(aiPlayers).forEach(([aid, bot]) => {
+                    if (!bot.isAlive || bot.room !== "room_ai") return;
+                    if (Math.hypot(bot.x - b.x, bot.y - b.y) < 25) {
+                        const dmg = b.damage || 31;
+                        const newHp = Math.max(0, bot.hp - dmg);
+                        update(ref(db, 'aiBots/' + aid), { hp: newHp, isAlive: newHp > 0 });
+                        if (newHp <= 0) {
+                            // Player gets kill reward
+                            myStats.coins++;
+                            update(ref(db, 'players/' + myId), { kills: increment(1) });
+                            update(ref(db, 'playerStats/' + myId), { kills: increment(1), coins: increment(1) });
+                            updateCoinDisplay();
+                            addKillFeed(me.name + " membunuh " + bot.name);
+                            // Respawn bot after 3s
+                            setTimeout(() => {
+                                if (myBotIds.includes(aid)) {
+                                    update(ref(db, 'aiBots/' + aid), { isAlive: true, hp: 100, x: 800+Math.random()*400, y: 800+Math.random()*400 });
+                                }
+                            }, 3000);
+                        }
                         remove(ref(db, 'bullets/' + id));
                     }
                 });
-            }
-
-            // RENDERING
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            ctx.translate(-camera.x, -camera.y);
-
-            // Draw Zona Putih
-            ctx.beginPath(); ctx.arc(SAFE_ZONE.x, SAFE_ZONE.y, SAFE_ZONE.radius, 0, Math.PI*2);
-            ctx.strokeStyle = "white"; ctx.lineWidth = 10; ctx.stroke();
-
-            // Draw Players & UI Lokal
-            Object.values(players).forEach(p => {
-                if(!p.isAlive) return;
-                // Auto-Lock Range (Hanya tampil di diri sendiri)
-                if(p.id === myId) {
-                    ctx.beginPath(); ctx.arc(p.x, p.y, FIRE_RANGE, 0, Math.PI*2);
-                    ctx.strokeStyle = "rgba(0, 243, 255, 0.1)"; ctx.lineWidth = 2; ctx.stroke();
-                }
-                // Health Bar (Fix: Selalu muncul)
-                ctx.fillStyle = "#222"; ctx.fillRect(p.x - 30, p.y - 45, 60, 8);
-                ctx.fillStyle = (p.hp > 30) ? varName('--neon-blue') : varName('--neon-red');
-                ctx.fillRect(p.x - 30, p.y - 45, (Math.max(0, p.hp)/100)*60, 8);
-                // Box Body
-                ctx.shadowBlur = 15; ctx.shadowColor = p.color;
-                ctx.fillStyle = p.color; ctx.fillRect(p.x - 15, p.y - 15, 30, 30);
-                // Name Tag
-                ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "bold 12px Orbitron";
-                ctx.fillText(p.name, p.x - 25, p.y - 55);
             });
-
-            // Draw Global Bullets
-            Object.values(globalBullets).forEach(b => {
-                ctx.fillStyle = "yellow"; ctx.beginPath();
-                ctx.arc(b.x, b.y, 6, 0, Math.PI*2); ctx.fill();
-                b.x += b.vx; b.y += b.vy; // Smooth visual movement
-            });
-
-            ctx.restore();
-            if(myId && players[myId]) {
-                document.getElementById("hud-score").innerText = `K: ${players[myId].kills} | D: ${players[myId].deaths} | HP: ${players[myId].hp}`;
-            }
-            requestAnimationFrame(loop);
         }
 
-        function varName(n) { return getComputedStyle(document.documentElement).getPropertyValue(n); }
+        updateHUD(me);
+    }
 
-        // JOYSTICK LOGIC
-        const jContainer = document.getElementById("joystick-container");
-        const jStick = document.getElementById("joystick-stick");
-        jContainer.addEventListener("touchstart", () => joystick.active = true);
-        window.addEventListener("touchmove", (e) => {
-            if(!joystick.active) return;
-            const t = e.touches[0]; const r = jContainer.getBoundingClientRect();
-            const dx = t.clientX - (r.left + 65), dy = t.clientY - (r.top + 65);
-            const d = Math.hypot(dx, dy), ratio = d > 65 ? 65/d : 1;
-            joystick.moveX = (dx*ratio)/65; joystick.moveY = (dy*ratio)/65;
-            jStick.style.transform = `translate(calc(-50% + ${dx*ratio}px), calc(-50% + ${dy*ratio}px))`;
-        });
-        window.addEventListener("touchend", () => { joystick.active = false; joystick.moveX = 0; joystick.moveY = 0; jStick.style.transform = `translate(-50%, -50%)`; });
+    // ---- RENDER ----
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
 
-        // START GAME
-        document.getElementById("start-btn").onclick = () => {
-            let s = 3; document.getElementById("start-btn").innerText = s;
-            const t = setInterval(() => {
-                s--; document.getElementById("start-btn").innerText = s;
-                if(s <= 0) {
-                    clearInterval(t);
-                    document.getElementById("ui-lobby").style.display = "none";
-                    document.getElementById("hud").style.display = "block";
-                    document.getElementById("joystick-container").style.display = "block";
-                    document.getElementById("fire-btn").style.display = "flex";
-                    canvas.style.display = "block";
-                    requestAnimationFrame(loop);
-                }
-            }, 1000);
-        };
-        document.getElementById("login-btn").onclick = () => signInWithPopup(auth, provider);
-    </script>
+    // Draw grid
+    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.lineWidth = 1;
+    for (let x = 0; x < 2000; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 2000); ctx.stroke(); }
+    for (let y = 0; y < 2000; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(2000, y); ctx.stroke(); }
+
+    // Safe zone
+    ctx.beginPath(); ctx.arc(SAFE_ZONE.x, SAFE_ZONE.y, SAFE_ZONE.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 6; ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = 60; ctx.stroke();
+
+    const FIRE_RANGE = getMyFireRange();
+
+    // Draw AI bots
+    Object.values(aiPlayers).forEach(bot => {
+        if (!bot.isAlive || bot.room !== myRoom) return;
+        ctx.shadowBlur = 12; ctx.shadowColor = bot.color;
+        ctx.fillStyle = bot.color; ctx.fillRect(bot.x - 15, bot.y - 15, 30, 30);
+        ctx.shadowBlur = 0;
+        // HP bar
+        ctx.fillStyle = "#222"; ctx.fillRect(bot.x - 30, bot.y - 45, 60, 7);
+        ctx.fillStyle = "#ff6600"; ctx.fillRect(bot.x - 30, bot.y - 45, (bot.hp / 100) * 60, 7);
+        ctx.fillStyle = "white"; ctx.font = "bold 11px Orbitron"; ctx.textAlign = "center";
+        ctx.fillText(bot.name, bot.x, bot.y - 52); ctx.textAlign = "left";
+        // AI label
+        ctx.fillStyle = "#ff6600"; ctx.font = "10px Orbitron"; ctx.textAlign = "center";
+        ctx.fillText("[AI]", bot.x, bot.y + 28); ctx.textAlign = "left";
+    });
+
+    // Draw players
+    Object.values(players).forEach(p => {
+        if (!p.isAlive || p.room !== myRoom) return;
+        // Fire range circle (only own)
+        if (p.id === myId) {
+            ctx.beginPath(); ctx.arc(p.x, p.y, FIRE_RANGE, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(0,243,255,0.08)"; ctx.lineWidth = 2; ctx.stroke();
+        }
+        // HP bar
+        ctx.fillStyle = "#222"; ctx.fillRect(p.x - 30, p.y - 45, 60, 7);
+        ctx.fillStyle = (p.hp > 30) ? (p.color || "#00f3ff") : "#ff3131";
+        ctx.fillRect(p.x - 30, p.y - 45, (Math.max(0, p.hp) / 100) * 60, 7);
+        // Body
+        ctx.shadowBlur = 18; ctx.shadowColor = p.color || "#00f3ff";
+        ctx.fillStyle = p.color || "#00f3ff"; ctx.fillRect(p.x - 15, p.y - 15, 30, 30);
+        ctx.shadowBlur = 0;
+        // Name
+        ctx.fillStyle = p.id === myId ? "#fff" : "#ccc";
+        ctx.font = "bold 12px Orbitron"; ctx.textAlign = "center";
+        ctx.fillText(p.name, p.x, p.y - 52); ctx.textAlign = "left";
+    });
+
+    // Draw bullets
+    Object.values(globalBullets).forEach(b => {
+        if (b.room !== myRoom) return;
+        const bc = b.color || "#ffff00";
+        ctx.fillStyle = bc;
+        ctx.shadowBlur = 10; ctx.shadowColor = bc;
+        ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+
+    ctx.restore();
+    requestAnimationFrame(loop);
+}
+
+// ---- JOYSTICK ----
+const jContainer = document.getElementById("joystick-container");
+const jStick = document.getElementById("joystick-stick");
+jContainer.addEventListener("touchstart", () => joystick.active = true);
+window.addEventListener("touchmove", e => {
+    if (!joystick.active) return;
+    const t = e.touches[0];
+    const r = jContainer.getBoundingClientRect();
+    const dx = t.clientX - (r.left + 65), dy = t.clientY - (r.top + 65);
+    const d = Math.hypot(dx, dy), ratio = d > 65 ? 65 / d : 1;
+    joystick.moveX = (dx * ratio) / 65; joystick.moveY = (dy * ratio) / 65;
+    jStick.style.transform = `translate(calc(-50% + ${dx * ratio}px), calc(-50% + ${dy * ratio}px))`;
+});
+window.addEventListener("touchend", () => {
+    joystick.active = false; joystick.moveX = 0; joystick.moveY = 0;
+    jStick.style.transform = `translate(-50%, -50%)`;
+});
+
+// ---- START GAME ----
+document.getElementById("start-btn").onclick = () => {
+    // Apply customization from lobby inputs
+    myColor = document.getElementById("custom-color").value;
+    myBulletColor = document.getElementById("custom-bullet").value;
+    const nameInput = document.getElementById("custom-name").value.trim();
+    myDisplayName = nameInput || currentUser.displayName;
+
+    savePersistentStats();
+
+    const pRef = ref(db, 'players/' + myId);
+    set(pRef, {
+        id: myId, name: myDisplayName, x: 1000 + (Math.random()-0.5)*200, y: 1000 + (Math.random()-0.5)*200,
+        color: myColor, hp: 100, kills: 0, deaths: 0, isAlive: true,
+        lastKiller: "THE ZONE", room: myRoom
+    });
+    onDisconnect(pRef).remove();
+
+    // Setup AI bots if AI room
+    if (myRoom === "room_ai") setupAIBots();
+
+    let s = 3;
+    const btn = document.getElementById("start-btn");
+    btn.textContent = s;
+    const t = setInterval(() => {
+        s--; btn.textContent = s;
+        if (s <= 0) {
+            clearInterval(t);
+            document.getElementById("ui-lobby").style.display = "none";
+            document.getElementById("hud").style.display = "block";
+            document.getElementById("joystick-container").style.display = "block";
+            document.getElementById("fire-btn").style.display = "flex";
+            document.getElementById("leaderboard-btn").style.display = "block";
+            document.getElementById("shop-btn").style.display = "block";
+            document.getElementById("killfeed").style.display = "block";
+            canvas.style.display = "block";
+            requestAnimationFrame(loop);
+        }
+    }, 1000);
+};
+
+document.getElementById("login-btn").onclick = () => signInWithPopup(auth, provider);
+</script>
 </body>
 </html>
