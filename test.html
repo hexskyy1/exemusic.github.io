@@ -905,20 +905,20 @@ tr:hover td{background:rgba(255,255,255,.01)}
   <div class="ctr"><div class="two-col"><div class="main-col">
     <div style="font-family:'Syne',sans-serif;font-size:14.5px;font-weight:700;color:#fff;margin-bottom:13px">Leaderboard Komunitas</div>
     <div class="tabs">
-      <button class="tbn act" onclick="stab(this,'lb-posts');loadLB('posts')">📰 Posts</button>
-      <button class="tbn" onclick="stab(this,'lb-pts');loadLB('pts')">⭐ Points</button>
+      <button class="tbn act" onclick="stab(this,'lb-posts');resetLBFilter('posts');loadLB('posts')">📰 Posts</button>
+      <button class="tbn" onclick="stab(this,'lb-pts');resetLBFilter('pts');loadLB('pts')">⭐ Points</button>
     </div>
     
     <!-- Filter Tabs for Posts -->
     <div class="lb-filter-tabs" id="lbPostsFilters" style="display:none">
-      <button class="lb-filter-tab active" onclick="setLBFilter('all', 'posts');this.classList.add('active')">🌟 All Time</button>
-      <button class="lb-filter-tab" onclick="setLBFilter('month', 'posts');this.classList.add('active')">📅 Bulan Ini</button>
+      <button class="lb-filter-tab active" id="lbPostsAll" onclick="setLBFilter('all', 'posts')">🌟 All Time</button>
+      <button class="lb-filter-tab" id="lbPostsMonth" onclick="setLBFilter('month', 'posts')">📅 Bulan Ini</button>
     </div>
     
     <!-- Filter Tabs for Points -->
     <div class="lb-filter-tabs" id="lbPtsFilters" style="display:none">
-      <button class="lb-filter-tab active" onclick="setLBFilter('all', 'pts');this.classList.add('active')">🌟 All Time</button>
-      <button class="lb-filter-tab" onclick="setLBFilter('month', 'pts');this.classList.add('active')">📅 Bulan Ini</button>
+      <button class="lb-filter-tab active" id="lbPtsAll" onclick="setLBFilter('all', 'pts')">🌟 All Time</button>
+      <button class="lb-filter-tab" id="lbPtsMonth" onclick="setLBFilter('month', 'pts')">📅 Bulan Ini</button>
     </div>
     
     <div class="tpanel act" id="lb-posts"><div class="card" id="lbPostsEl"><div style="padding:22px;text-align:center;color:var(--t3)">Memuat...</div></div></div>
@@ -1584,34 +1584,26 @@ function initFeed(){
   loadFeed();
 }
 
-async function loadFeed(){
-  const { data, error } = await _supabase
-    .from('posts')
-    .select('*, comments(*), likes(uid)')
-    .order('ts', { ascending: false })
-    .limit(40);
-  
-  var list=document.getElementById('feedList'),emp=document.getElementById('feedEmpty');
-  if(!list)return;
-  
-  if(!data || data.length === 0){
-    list.innerHTML='';
-    if(emp)emp.style.display='';
-    return;
-  }
-  if(emp)emp.style.display='none';
-  list.innerHTML=data.map(function(e){return renderPost(e.id, e);}).join('');
+function loadFeed(){
+  DB.ref('posts').orderByChild('ts').limitToLast(40).get().then(function(snap){
+    var list=document.getElementById('feedList'),emp=document.getElementById('feedEmpty');if(!list)return;
+    if(!snap.exists()){list.innerHTML='';if(emp)emp.style.display='';return;}
+    if(emp)emp.style.display='none';
+    list.innerHTML=Object.entries(snap.val()).sort(function(a,b){return b[1].ts-a[1].ts;}).map(function(e){return renderPost(e[0],e[1]);}).join('');
+  });
 }
 
-function renderPost(key, p) {
-  var av = p.photoURL ? '<img src="'+esc(p.photoURL)+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : '<span style="font-size:11px;font-weight:700">'+ini(p.author||'?')+'</span>';
-  var likes = p.likes ? p.likes.length : 0;
-  var liked = CU && p.likes && p.likes.some(function(l){ return l.uid === CU.uid; });
-  var canDel = CU && (CU.uid === p.uid || (UP && ADMIN_ROLES.indexOf(UP.role) > -1));
+function renderPost(key,p){
+  var av=p.photoURL?'<img src="'+esc(p.photoURL)+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':'<span style="font-size:11px;font-weight:700">'+ini(p.author||'?')+'</span>';
+  var likes=Object.keys(p.likes||{}).length;
+  var liked=CU&&p.likes&&p.likes[CU.uid];
+  var canDel=CU&&(CU.uid===p.uid||(UP&&ADMIN_ROLES.indexOf(UP.role)>-1));
   
-  // Handle different media types
+  // Handle media - support imageUrl from Firebase AND file_url from Supabase
   var mediaHtml = '';
-  if (p.image_url) {
+  if (p.imageUrl) {
+    mediaHtml = '<img class="post-img" src="'+esc(p.imageUrl)+'" onclick="viewImg(this.src)" alt="foto">';
+  } else if (p.image_url) {
     mediaHtml = '<img class="post-img" src="'+esc(p.image_url)+'" onclick="viewImg(this.src)" alt="foto">';
   } else if (p.video_url) {
     mediaHtml = '<video class="post-img" controls style="max-width:100%;max-height:400px;background:#000"><source src="'+esc(p.video_url)+'"></video>';
@@ -1623,12 +1615,11 @@ function renderPost(key, p) {
   var contentHtml = '';
   if (p.content) {
     var processedContent = esc(p.content);
-    // Convert URLs to clickable links
     processedContent = processedContent.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--acc)">$1</a>');
     contentHtml = '<div class="post-body">'+processedContent+'</div>';
   }
   
-  return '<div class="post-card" id="pc-'+key+'"><div class="post-hdr"><div class="post-ava">'+av+'</div><div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:#fff">'+esc(p.author||'?')+' <span class="'+rc(p.role)+'" style="font-size:9px;padding:1px 5px;background:rgba(255,255,255,.04);border-radius:3px">'+esc(RLBL[p.role||'user']||'Member')+'</span></div><div style="font-size:10px;color:var(--t3)">'+ago(p.ts)+'</div></div>'+(canDel?'<button class="btn btn-r btn-xs" onclick="delPost(\''+key+'\')" style="margin-left:auto">Hapus</button>':'')+'</div>'+contentHtml+mediaHtml+'<div class="post-acts"><button class="rbtn'+(liked?' liked':'')+'" id="like-'+key+'" onclick="toggleLike(\''+key+'\',this)">&#10084; '+likes+'</button><button class="rbtn" onclick="toggleCmt(\''+key+'\')">&#128172; Komentar</button></div><div class="cmt-box" id="cmt-'+key+'" style="display:none"><div id="cmtList-'+key+'" style="margin-bottom:7px"></div>'+(CU?'<div style="display:flex;gap:6px;align-items:center"><div class="cmt-av">'+ini(UP&&UP.username||'?')+'</div><input class="cmt-inp" placeholder="Komentar..." onkeydown="if(event.key===\'Enter\')addCmt(\''+key+'\',this)"></div>':'<div style="font-size:11px;color:var(--t3)">Login untuk komentar.</div>')+'</div></div>';
+  return '<div class="post-card" id="pc-'+key+'"><div class="post-hdr"><div class="post-ava" onclick="viewPublicProfile(\''+esc(p.author)+'\')" style="cursor:pointer">'+av+'</div><div style="flex:1"><div style="font-size:12.5px;font-weight:600;color:#fff;cursor:pointer" onclick="viewPublicProfile(\''+esc(p.author)+'\')">'+esc(p.author||'?')+' <span class="'+rc(p.role)+'" style="font-size:9px;padding:1px 5px;background:rgba(255,255,255,.04);border-radius:3px">'+esc(RLBL[p.role||'user']||'Member')+'</span></div><div style="font-size:10px;color:var(--t3)">'+ago(p.ts)+'</div></div>'+(canDel?'<button class="btn btn-r btn-xs" onclick="delPost(\''+key+'\')" style="margin-left:auto">Hapus</button>':'')+'</div>'+contentHtml+mediaHtml+'<div class="post-acts"><button class="rbtn'+(liked?' liked':'')+'" id="like-'+key+'" onclick="toggleLike(\''+key+'\',this)">&#10084; '+likes+'</button><button class="rbtn" onclick="toggleCmt(\''+key+'\')">&#128172; Komentar</button></div><div class="cmt-box" id="cmt-'+key+'" style="display:none"><div id="cmtList-'+key+'" style="margin-bottom:7px"></div>'+(CU?'<div style="display:flex;gap:6px;align-items:center"><div class="cmt-av">'+ini(UP&&UP.username||'?')+'</div><input class="cmt-inp" placeholder="Komentar..." onkeydown="if(event.key===\'Enter\')addCmt(\''+key+'\',this)"></div>':'<div style="font-size:11px;color:var(--t3)">Login untuk komentar.</div>')+'</div></div>';
 }
 
 function viewImg(url){
@@ -2076,26 +2067,47 @@ var lbFilter = 'all'; // 'all' or 'month'
 
 function setLBFilter(filter, type) {
   lbFilter = filter;
-  // Update UI
-  var container = type === 'posts' ? document.getElementById('lbPostsEl') : document.getElementById('lbPtsEl');
-  if (container) {
-    var tabs = container.previousElementSibling;
-    if (tabs && tabs.classList.contains('tabs')) {
-      var btns = tabs.querySelectorAll('.tbn');
-      btns.forEach(function(btn) {
-        btn.classList.remove('act');
-        if (btn.textContent.toLowerCase().includes(filter)) {
-          btn.classList.add('act');
-        }
-      });
-    }
+  
+  // Update filter tab buttons
+  var filterContainer = type === 'posts' ? document.getElementById('lbPostsFilters') : document.getElementById('lbPtsFilters');
+  if (filterContainer) {
+    var filterBtns = filterContainer.querySelectorAll('.lb-filter-tab');
+    filterBtns.forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    var activeBtn = filter === 'all' ? 
+      (type === 'posts' ? document.getElementById('lbPostsAll') : document.getElementById('lbPtsAll')) :
+      (type === 'posts' ? document.getElementById('lbPostsMonth') : document.getElementById('lbPtsMonth'));
+    if (activeBtn) activeBtn.classList.add('active');
   }
+  
   loadLB(type);
+}
+
+function resetLBFilter(type) {
+  lbFilter = 'all';
+  var filterContainer = type === 'posts' ? document.getElementById('lbPostsFilters') : document.getElementById('lbPtsFilters');
+  if (filterContainer) {
+    var filterBtns = filterContainer.querySelectorAll('.lb-filter-tab');
+    filterBtns.forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+    var allBtn = type === 'posts' ? document.getElementById('lbPostsAll') : document.getElementById('lbPtsAll');
+    if (allBtn) allBtn.classList.add('active');
+  }
 }
 
 async function loadLB(type) {
   var el = type === 'posts' ? document.getElementById('lbPostsEl') : document.getElementById('lbPtsEl');
   if (!el) return;
+  
+  // Show/hide filter tabs based on type
+  var postsFilters = document.getElementById('lbPostsFilters');
+  var ptsFilters = document.getElementById('lbPtsFilters');
+  if (postsFilters && ptsFilters) {
+    postsFilters.style.display = type === 'posts' ? 'flex' : 'none';
+    ptsFilters.style.display = type === 'pts' ? 'flex' : 'none';
+  }
   
   try {
     var query = _supabase
@@ -2137,7 +2149,7 @@ async function loadLB(type) {
       var av = u.photoURL ? '<img src="' + esc(u.photoURL) + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">' : ini(u.username || '?');
       var val = type === 'posts' ? (u.postCount || 0) : (u.points || 0) + ' pts';
       var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
-      return '<div class="lb-row"><div class="lb-rank' + (i < 3 ? ' r' + (i + 1) : '') + '">' + medal + '</div><div class="lb-av">' + av + '</div><div class="lb-info"><div class="lb-name">' + esc(u.username || '?') + '</div><div class="lb-sub ' + rc(u.role || 'user') + '">' + esc(RLBL[u.role || 'user'] || 'Member') + '</div></div><div class="lb-val' + (type === 'pts' ? ' lb-pts' : '') + '">' + val + '</div></div>';
+      return '<div class="lb-row" style="cursor:pointer" onclick="viewPublicProfile(\'' + esc(u.username) + '\')"><div class="lb-rank' + (i < 3 ? ' r' + (i + 1) : '') + '">' + medal + '</div><div class="lb-av">' + av + '</div><div class="lb-info"><div class="lb-name">' + esc(u.username || '?') + '</div><div class="lb-sub ' + rc(u.role || 'user') + '">' + esc(RLBL[u.role || 'user'] || 'Member') + '</div></div><div class="lb-val' + (type === 'pts' ? ' lb-pts' : '') + '">' + val + '</div></div>';
     }).join('');
   } catch (err) {
     el.innerHTML = '<div style="padding:22px;text-align:center;color:var(--t3)">Error: ' + err.message + '</div>';
@@ -2437,6 +2449,11 @@ function maskEmail(email) {
   return visible_start + stars + visible_end + '@' + parts[1];
 }
 
+// View public profile (wrapper)
+function viewPublicProfile(username) {
+  loadPublicProfile(username);
+}
+
 // Load public profile by username
 async function loadPublicProfile(username) {
   try {
@@ -2461,7 +2478,10 @@ async function loadPublicProfile(username) {
       '<div class="profile-public-body">' +
         '<div class="profile-public-name">' + esc(u.username) + '</div>' +
         '<div class="profile-public-role ' + rc(u.role || 'user') + '">' + esc(RLBL[u.role || 'user'] || 'Member') + '</div>' +
-        '<div class="profile-public-id">UID: ' + esc(u.uid) + '</div>' +
+        '<div class="profile-public-id" style="display:flex;align-items:center;gap:8px;justify-content:space-between">' +
+          '<span>📍 @' + esc(u.username) + ' | UID: ' + esc(u.uid.substring(0, 12)) + '...</span>' +
+          '<button class="btn btn-xs" onclick="copyTxt(\''+esc(u.uid)+'\')" style="flex-shrink:0">📋 Copy UID</button>' +
+        '</div>' +
         '<div class="profile-public-stats">' +
           '<div class="profile-public-stat"><span class="sv">' + (u.postCount || 0) + '</span><span class="sl">Posts</span></div>' +
           '<div class="profile-public-stat"><span class="sv">' + (u.points || 0) + '</span><span class="sl">Points</span></div>' +
