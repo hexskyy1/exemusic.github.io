@@ -1391,7 +1391,7 @@ function cm(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal.open').forEach(function(m){m.classList.remove('open');});});
 
 // ============ NAV ============
-function nav(page){
+function nav(page, fromHashChange){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
   var el=document.getElementById('page-'+page);if(el)el.classList.add('act');
   document.querySelectorAll('.tb-nav a').forEach(function(a){a.classList.remove('act');});
@@ -1407,17 +1407,21 @@ function nav(page){
   else if(page==='profile')initProfile();
   else if(page==='admin')initAdmin();
   window.scrollTo(0,0);
-  // Update URL hash
-  history.replaceState(null, null, '#' + page);
+  // Update URL hash only if not called from hashchange
+  if (!fromHashChange) {
+    history.replaceState(null, null, '#' + page);
+  }
 }
 
 // Handle hash change on load and navigation
+var hashNavInProgress = false;
 window.addEventListener('hashchange', function() {
+  if (hashNavInProgress) return;
   var hash = window.location.hash.substring(1);
   if (hash) {
-    nav(hash);
+    nav(hash, true);
   } else {
-    nav('home');
+    nav('home', true);
   }
 });
 
@@ -1425,9 +1429,9 @@ window.addEventListener('hashchange', function() {
 function initHashNav() {
   var hash = window.location.hash.substring(1);
   if (hash) {
-    nav(hash);
+    nav(hash, true);
   } else {
-    nav('home');
+    nav('home', true);
   }
 }
 
@@ -2935,7 +2939,7 @@ var ADM_MENU=[
 ];
 
 function initAdmin(){
-  if(!CU||!UP||ADMIN_ROLES.indexOf(UP.role)<0){nav('home');toast('Akses ditolak.','e');return;}
+  if(!CU||!UP||ADMIN_ROLES.indexOf(UP.role)<0){toast('Akses ditolak.','e');nav('home',true);return;}
   buildAdmSidebar();
   loadAdmDashboard();
   loadAdmWL();
