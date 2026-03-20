@@ -1825,16 +1825,13 @@ async function submitPost() {
     
     if (error) throw error;
     
-    // Update user post count
-    await _supabase.rpc('increment_post_count', { uid: CU.uid }).catch(function() {
-      // Fallback if RPC doesn't exist
-      return _supabase.from('users').select('postCount').eq('uid', CU.uid).single();
-    }).then(function(res) {
-      if (res.data) {
-        var newCount = (res.data.postCount || 0) + 1;
-        _supabase.from('users').update({ postCount: newCount }).eq('uid', CU.uid);
-      }
-    });
+    // Update user post count in Firebase
+    var userSnap = await DB.ref('users/' + CU.uid).get();
+    if (userSnap.exists()) {
+      var userData = userSnap.val();
+      var newCount = (userData.postCount || 0) + 1;
+      DB.ref('users/' + CU.uid + '/postCount').set(newCount);
+    }
     
     addLog('POST', UP.username + ' posting: ' + txt.substring(0, 60));
     
@@ -2186,30 +2183,26 @@ async function loadLB(type) {
   }
   
   try {
-    var query = _supabase
-      .from('users')
-      .select('uid, username, photoURL, role, points, postCount, createdAt, lastActive');
+    // Use Firebase - get users/uid/points and users/uid/postCount
+    var snapshot = await DB.ref('users').get();
     
-    // Apply monthly filter
+    if (!snapshot.exists()) {
+      el.innerHTML = '<div style="padding:22px;text-align:center;color:var(--t3)">Belum ada data.</div>';
+      return;
+    }
+    
+    var allUsers = snapshot.val();
+    var data = Object.values(allUsers);
+    
+    // Apply monthly filter if needed
     if (lbFilter === 'month') {
       var startOfMonth = new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-      
-      // Get posts in this month for each user
       var startTimestamp = startOfMonth.getTime();
       
-      // For now, we'll get all users and filter in memory
-      // In production, you'd want to track monthly stats separately
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      el.innerHTML = '<div style="padding:22px;text-align:center;color:var(--t3)">Belum ada data.</div>';
-      return;
+      // Filter users who have activity this month
+      // For now, we'll show all - in production you'd track monthly stats separately
     }
     
     // Sort by type
@@ -2533,18 +2526,16 @@ function viewPublicProfile(username) {
 // Load public profile by username
 async function loadPublicProfile(username) {
   try {
-    const { data, error } = await _supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .single();
+    // Use Firebase to get user by username
+    var snapshot = await DB.ref('users').orderByChild('username').equalTo(username).get();
     
-    if (error || !data) {
+    if (!snapshot.exists()) {
       document.getElementById('publicProfileContent').innerHTML = '<div style="padding:40px;text-align:center;color:var(--t3)">Profil tidak ditemukan</div>';
       return;
     }
     
-    var u = data;
+    var userData = snapshot.val();
+    var u = Object.values(userData)[0];
     var html = '<div class="profile-public-card">' +
       '<div class="profile-public-header">' +
         '<div class="profile-public-avatar">' + 
@@ -2590,11 +2581,11 @@ function copyProfileLink(username) {
 function initProfile(){
   if(!CU){om('moLogin');return;}
   
-  // Use global UP which is already loaded via Supabase
+  // Use global UP which is already loaded via Firebase
   if(!UP) return;
   
-  // Update lastActive
-  _supabase.from('users').update({ lastActive: Date.now() }).eq('uid', CU.uid);
+  // Update lastActive in Firebase
+  DB.ref('users/'+CU.uid+'/lastActive').set(Date.now());
   
   st('profName',UP.username||'—');
   st('profUN',UP.username||'—');
@@ -3154,11 +3145,11 @@ async function reviewWL(key, status) {
       .single();
     
     if (status === 'accepted' && wlData && wlData.uid) {
-      // Auto update user's IC name and WL status when accepted
-      await _supabase.from('users').update({
+      // Auto update user's IC name and WL status when accepted in Firebase
+      DB.ref('users/' + wlData.uid).update({
         wlStatus: 'accepted',
         icName: wlData.name // Auto set IC name
-      }).eq('uid', wlData.uid);
+      });
       
       addLog('WL_ACCEPTED', UP.username + ' accept WL: ' + wlData.name + ' (IC Name set)');
     } else {
