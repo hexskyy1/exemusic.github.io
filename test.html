@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Miracle </title>
+<title>Miracle Community</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -425,16 +425,64 @@ tr:hover td{background:rgba(255,255,255,.01)}
 .gear-item.danger:hover{background:rgba(239,69,101,.08)}
 /* USERNAME MODAL */
 .cd-badge{display:inline-block;font-size:9px;padding:1px 6px;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);color:var(--gold);border-radius:3px;margin-left:5px}
-@media(max-width:960px){.side-col{display:none}}
-@media(max-width:768px){
-  .hbg{display:flex}.tb-nav{display:none}.two-col{padding:9px 0 28px}.ctr{padding:0 11px}
-  .staff-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
-  .adm-sb{display:none!important}.adm-mob-hdr{display:flex!important}
-  .adm-layout{flex-direction:column}.adm-cnt{padding:11px 13px;width:100%}
-  .adm-sg{grid-template-columns:repeat(2,1fr)}.sett-grid{grid-template-columns:1fr}.tbl-wrap{overflow-x:auto}
-  table{min-width:500px}.mdl.wide{max-width:94vw}
+@media(max-width:960px){
+  .side-col{display:none}
+  .two-col{gap:10px}
 }
-@media(max-width:480px){.wl-sl{display:none}.adm-sg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .hbg{display:flex}
+  .tb-nav{display:none}
+  .two-col{padding:9px 0 28px;flex-direction:column;gap:8px}
+  .ctr{padding:0 11px}
+  .main-col{width:100%}
+  .staff-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .adm-sb{display:none!important}
+  .adm-mob-hdr{display:flex!important}
+  .adm-layout{flex-direction:column}
+  .adm-cnt{padding:11px 13px;width:100%}
+  .adm-sg{grid-template-columns:repeat(2,1fr)}
+  .sett-grid{grid-template-columns:1fr}
+  .tbl-wrap{overflow-x:auto}
+  table{min-width:500px}
+  .mdl.wide{max-width:94vw}
+  .prof-head{flex-direction:column;align-items:center;text-align:center;gap:10px}
+  .prof-stats{justify-content:center;flex-wrap:wrap}
+  .server-info-card{padding:15px}
+  .server-actions{flex-direction:column}
+  .server-action-btn{min-width:100%}
+  .lb-row{padding:9px 10px}
+  .lb-info{min-width:0}
+  .lb-name{font-size:11px}
+  .cat-item{padding:10px 12px}
+  .composer{padding:10px}
+  .comp-inp{min-height:60px}
+  .post-card{margin-bottom:6px}
+  .post-hdr{padding:8px 10px}
+  .post-body{padding:6px 10px;font-size:12px}
+  .tabs{overflow-x:auto;flex-wrap:nowrap}
+  .tbn{white-space:nowrap;padding:7px 10px}
+  .lb-filter-tabs{overflow-x:auto;padding-bottom:5px}
+  .lb-filter-tab{white-space:nowrap}
+  .profile-public-card{margin:0 -5px}
+  .profile-public-body{padding:40px 15px 15px}
+  .profile-public-stats{flex-wrap:wrap;justify-content:center}
+  .ann-card{padding:12px}
+  .guide-card{padding:12px}
+}
+@media(max-width:480px){
+  .wl-sl{display:none}
+  .adm-sg{grid-template-columns:repeat(2,1fr)}
+  .prof-ava{width:60px;height:60px;font-size:18px}
+  .prof-name{font-size:15px}
+  .prof-stat .sv{font-size:15px}
+  .server-ip-display{flex-direction:column;gap:8px;align-items:stretch;text-align:center}
+  .server-ip-copy{width:100%}
+  .lb-filter-tabs{gap:5px}
+  .lb-filter-tab{padding:5px 8px;font-size:10px}
+  .cat-icon{width:30px;height:30px;font-size:12px}
+  .cat-name{font-size:12px}
+  .cat-desc{font-size:10px}
+}
 
 /* BANNED OVERLAY */
 #bannedOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#1a0a0a 0%,#0d0d1a 50%,#0a0a1a);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center}
@@ -1359,6 +1407,28 @@ function nav(page){
   else if(page==='profile')initProfile();
   else if(page==='admin')initAdmin();
   window.scrollTo(0,0);
+  // Update URL hash
+  history.replaceState(null, null, '#' + page);
+}
+
+// Handle hash change on load and navigation
+window.addEventListener('hashchange', function() {
+  var hash = window.location.hash.substring(1);
+  if (hash) {
+    nav(hash);
+  } else {
+    nav('home');
+  }
+});
+
+// Initial nav on page load based on hash
+function initHashNav() {
+  var hash = window.location.hash.substring(1);
+  if (hash) {
+    nav(hash);
+  } else {
+    nav('home');
+  }
 }
 
 function stab(btn,pid){
@@ -1373,7 +1443,13 @@ function stab(btn,pid){
 function openMob(){document.getElementById('mobNav').classList.add('open');document.getElementById('mobOv').classList.add('open');}
 function closeMob(){document.getElementById('mobNav').classList.remove('open');document.getElementById('mobOv').classList.remove('open');}
 
-function hideLoader(){setTimeout(function(){document.getElementById('loader').classList.add('out');},300);}
+function hideLoader(){
+  setTimeout(function(){
+    document.getElementById('loader').classList.add('out');
+    // Initialize hash navigation after loader is hidden
+    initHashNav();
+  },300);
+}
 
 // ============ AUTH ============
 function loginGoogle(){
