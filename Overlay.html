@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MLBB Tracker ID — OBS Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; }
+  body { background: transparent; font-family: 'Space Mono', monospace; }
+
+  /* ── BANNER (1920×120) ── */
+  .overlay-banner {
+    display: none;
+    width: 100vw; height: 100vh;
+    align-items: center; justify-content: center;
+    background: rgba(6,8,16,0.92);
+    border-top: 2px solid rgba(240,180,41,0.4);
+    backdrop-filter: blur(10px);
+    gap: 0;
+  }
+  .overlay-banner.active { display: flex; }
+
+  .ob-block {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 32px; height: 100%;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .ob-block:last-child { border-right: none; }
+  .ob-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); margin-bottom: 4px;
+  }
+  .ob-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 40px; font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 0 20px currentColor;
+  }
+  .ob-user { font-size: 13px; font-weight: 700; color: rgba(240,180,41,0.8); letter-spacing: 1px; margin-bottom: 4px; }
+  .ob-date { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+  .ob-separator { width:1px; height:60px; background: rgba(255,255,255,0.06); }
+
+  /* ── SIDEBAR (300×500) ── */
+  .overlay-sidebar {
+    display: none;
+    width: 100vw; height: 100vh;
+    flex-direction: column;
+    background: rgba(6,8,16,0.92);
+    border: 1px solid rgba(240,180,41,0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  .overlay-sidebar.active { display: flex; }
+  .sidebar-header {
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(240,180,41,0.06);
+  }
+  .sidebar-brand { font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 900; color: #f0b429; letter-spacing: 2px; }
+  .sidebar-username { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .sidebar-stat {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sidebar-stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); }
+  .sidebar-stat-val { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900; }
+  .sidebar-wr-track { height: 4px; background: rgba(239,68,68,0.3); border-radius: 4px; overflow: hidden; margin: 12px 18px; }
+  .sidebar-wr-fill { height: 100%; background: linear-gradient(90deg,#10b981,#059669); border-radius: 4px; transition: width 0.5s ease; }
+  .sidebar-footer { padding: 10px 18px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; }
+  .sidebar-reset { font-size: 9px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+  .sidebar-reset span { color: rgba(34,211,238,0.6); }
+
+  /* ── WIDGET (400×280) ── */
+  .overlay-widget {
+    display: none;
+    width: 100vw; height: 100vh;
+    align-items: center; justify-content: center;
+    background: rgba(6,8,16,0.9);
+    border: 1px solid rgba(240,180,41,0.25);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    gap: 0;
+  }
+  .overlay-widget.active { display: flex; }
+  .widget-header {
+    width: 100%; padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(240,180,41,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .widget-brand { font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 900; color: #f0b429; letter-spacing: 2px; }
+  .widget-username { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .widget-stats { display: flex; width: 100%; flex: 1; }
+  .widget-stat {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 16px 8px; border-right: 1px solid rgba(255,255,255,0.04);
+  }
+  .widget-stat:last-child { border-right: none; }
+  .widget-stat-lbl { font-family: 'Orbitron', monospace; font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 6px; }
+  .widget-stat-val { font-family: 'Orbitron', monospace; font-size: 32px; font-weight: 900; line-height: 1; text-shadow: 0 0 16px currentColor; }
+  .widget-footer {
+    width: 100%; padding: 8px 16px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .widget-wr-track { flex: 1; height: 3px; background: rgba(239,68,68,0.3); border-radius: 3px; overflow: hidden; }
+  .widget-wr-fill { height: 100%; background: linear-gradient(90deg,#10b981,#059669); border-radius: 3px; transition: width 0.5s ease; }
+  .widget-wr-pct { font-size: 10px; font-weight: 700; }
+  .widget-timer { font-size: 9px; color: rgba(34,211,238,0.5); margin-left: auto; }
+
+  /* MINIMAL THEME */
+  body.minimal .overlay-widget, body.minimal .overlay-sidebar, body.minimal .overlay-banner {
+    background: transparent;
+    border-color: rgba(255,255,255,0.05);
+    backdrop-filter: none;
+  }
+  body.minimal .widget-header, body.minimal .sidebar-header {
+    background: rgba(6,8,16,0.7);
+  }
+  body.minimal .ob-block { background: rgba(6,8,16,0.7); border-radius: 8px; margin: 2px; }
+
+  /* DARK BLUE THEME */
+  body.darkblue { filter: hue-rotate(160deg) saturate(1.2); }
+  body.darkblue .ob-val, body.darkblue .widget-brand, body.darkblue .sidebar-brand { filter: hue-rotate(-160deg) saturate(1.5); }
+
+  /* COLORS */
+  .color-win { color: #10b981; }
+  .color-lose { color: #ef4444; }
+  .color-wr-good { color: #10b981; }
+  .color-wr-ok { color: #f0b429; }
+  .color-wr-bad { color: #ef4444; }
+  .color-mmr { color: #f0b429; }
+
+  /* LIVE DOT */
+  .live-indicator { display: flex; align-items: center; gap: 5px; font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+  .live-dot-obs { width: 5px; height: 5px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; animation: lpobs 2s infinite; }
+  @keyframes lpobs { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+</style>
+</head>
+<body>
+
+<!-- BANNER -->
+<div class="overlay-banner" id="overlayBanner">
+  <div class="ob-block" style="padding-left:24px">
+    <div class="ob-user" id="bannerUser">MLBB TRACKER ID</div>
+    <div class="ob-date" id="bannerDate">—</div>
+  </div>
+  <div class="ob-block">
+    <div class="ob-label">Win</div>
+    <div class="ob-val color-win" id="bannerWin">0</div>
+  </div>
+  <div class="ob-block">
+    <div class="ob-label">Lose</div>
+    <div class="ob-val color-lose" id="bannerLose">0</div>
+  </div>
+  <div class="ob-block">
+    <div class="ob-label">Win Rate</div>
+    <div class="ob-val" id="bannerWR" style="color:#f0b429">—%</div>
+  </div>
+  <div class="ob-block">
+    <div class="ob-label">MMR</div>
+    <div class="ob-val color-mmr" id="bannerMMR">—</div>
+  </div>
+  <div class="ob-block" style="padding-right:24px">
+    <div class="live-indicator"><div class="live-dot-obs"></div>LIVE</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="overlay-sidebar" id="overlaySidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">MLBB TRACKER ID</div>
+    <div class="sidebar-username" id="sidebarUser">—</div>
+  </div>
+  <div class="sidebar-stat">
+    <div class="sidebar-stat-label">Win</div>
+    <div class="sidebar-stat-val color-win" id="sidebarWin">0</div>
+  </div>
+  <div class="sidebar-stat">
+    <div class="sidebar-stat-label">Lose</div>
+    <div class="sidebar-stat-val color-lose" id="sidebarLose">0</div>
+  </div>
+  <div class="sidebar-wr-track"><div class="sidebar-wr-fill" id="sidebarWRBar" style="width:0%"></div></div>
+  <div class="sidebar-stat">
+    <div class="sidebar-stat-label">Win Rate</div>
+    <div class="sidebar-stat-val" id="sidebarWR" style="color:#f0b429">—%</div>
+  </div>
+  <div class="sidebar-stat">
+    <div class="sidebar-stat-label">MMR</div>
+    <div class="sidebar-stat-val color-mmr" id="sidebarMMR">—</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-reset">Reset <span id="sidebarTimer">—</span></div>
+    <div class="live-indicator"><div class="live-dot-obs"></div>LIVE</div>
+  </div>
+</div>
+
+<!-- WIDGET -->
+<div class="overlay-widget" id="overlayWidget">
+  <div class="widget-header">
+    <div class="widget-brand">MLBB TRACKER ID</div>
+    <div class="widget-username" id="widgetUser">—</div>
+  </div>
+  <div class="widget-stats">
+    <div class="widget-stat">
+      <div class="widget-stat-lbl">Win</div>
+      <div class="widget-stat-val color-win" id="widgetWin">0</div>
+    </div>
+    <div class="widget-stat">
+      <div class="widget-stat-lbl">Lose</div>
+      <div class="widget-stat-val color-lose" id="widgetLose">0</div>
+    </div>
+    <div class="widget-stat">
+      <div class="widget-stat-lbl">MMR</div>
+      <div class="widget-stat-val color-mmr" id="widgetMMR">—</div>
+    </div>
+  </div>
+  <div class="widget-footer">
+    <div class="widget-wr-track"><div class="widget-wr-fill" id="widgetWRBar" style="width:0%"></div></div>
+    <div class="widget-wr-pct" id="widgetWR" style="color:#10b981">0%</div>
+    <div class="widget-timer" id="widgetTimer">—</div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyBZs-qSS8Zj7wLs_TdUyYb03xviy81ew_Y",
+  authDomain: "winlose-mlbb.firebaseapp.com",
+  projectId: "winlose-mlbb",
+  storageBucket: "winlose-mlbb.firebasestorage.app",
+  messagingSenderId: "584562860632",
+  appId: "1:584562860632:web:b0b22c23a7871781c8202d",
+  databaseURL: "https://winlose-mlbb-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+const db = getDatabase(app);
+
+const params = new URLSearchParams(window.location.search);
+const uid = params.get('uid') || '';
+const size = params.get('size') || 'widget';
+const theme = params.get('theme') || 'dark';
+
+// Apply theme
+if (theme === 'minimal') document.body.classList.add('minimal');
+if (theme === 'darkblue') document.body.classList.add('darkblue');
+
+// Show correct layout
+const elMap = { banner:'overlayBanner', sidebar:'overlaySidebar', widget:'overlayWidget' };
+const activeEl = document.getElementById(elMap[size]||'overlayWidget');
+if (activeEl) activeEl.classList.add('active');
+
+let win=0,lose=0,mmr=null,username='—';
+
+function calcWR(w,l) { const t=w+l; return t>0?Math.round(w/t*100):0; }
+function wrColor(wr) { return wr>=60?'#10b981':wr>=50?'#f0b429':'#ef4444'; }
+function fmtDate() {
+  const MONTHS=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const d=new Date(); return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function updateAll() {
+  const wr=calcWR(win,lose);
+  const wrC=wrColor(wr);
+  const mmrD=mmr!==null?mmr:'—';
+
+  // Banner
+  setText('bannerWin',win); setText('bannerLose',lose);
+  setText('bannerWR',wr+'%'); styleColor('bannerWR',wrC);
+  setText('bannerMMR',mmrD); setText('bannerUser',username); setText('bannerDate',fmtDate());
+
+  // Sidebar
+  setText('sidebarWin',win); setText('sidebarLose',lose);
+  setText('sidebarWR',wr+'%'); styleColor('sidebarWR',wrC);
+  setText('sidebarMMR',mmrD); setText('sidebarUser',username);
+  styleWidth('sidebarWRBar',wr+'%');
+
+  // Widget
+  setText('widgetWin',win); setText('widgetLose',lose);
+  setText('widgetMMR',mmrD); setText('widgetWR',wr+'%');
+  styleColor('widgetWR',wrC); setText('widgetUser',username);
+  styleWidth('widgetWRBar',wr+'%');
+}
+
+function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function styleColor(id,c){const e=document.getElementById(id);if(e)e.style.color=c;}
+function styleWidth(id,w){const e=document.getElementById(id);if(e)e.style.width=w;}
+
+// Countdown
+setInterval(()=>{
+  const now=new Date(), mid=new Date(now); mid.setHours(24,0,0,0);
+  const diff=mid-now;
+  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+  const str=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  setText('sidebarTimer',str); setText('widgetTimer',`Reset ${str}`);
+},1000);
+
+if (uid) {
+  onValue(ref(db,`users/${uid}/profile`), snap=>{
+    const p=snap.val(); if(p) username=p.username||'—'; updateAll();
+  });
+  onValue(ref(db,`users/${uid}/daily`), snap=>{
+    const d=snap.val()||{}; win=d.win||0; lose=d.lose||0; updateAll();
+  });
+  onValue(ref(db,`users/${uid}/mmr`), snap=>{
+    mmr=snap.val(); updateAll();
+  });
+} else {
+  username='Demo User'; win=7; lose=3; mmr=1024; updateAll();
+}
+</script>
+</body>
+</html>
