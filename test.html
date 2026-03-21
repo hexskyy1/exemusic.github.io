@@ -2141,9 +2141,13 @@ function updateTopbar() {
   if (!currentUser || !userProfile) return;
   const ab = document.getElementById('avatarBtn');
   const photoURL = userProfile.photoURL || currentUser.photoURL || '';
-  if (photoURL) {
-    ab.innerHTML = `<img src="${escH(photoURL)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  } else {
+  if (photoURL && ab) {
+    const img = document.createElement('img');
+    img.src = photoURL;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+    ab.innerHTML = '';
+    ab.appendChild(img);
+  } else if (ab) {
     ab.textContent = (userProfile.username||'?')[0].toUpperCase();
   }
   document.getElementById('ddName').textContent = userProfile.username || '—';
@@ -2499,7 +2503,11 @@ function loadSettingsAvatar() {
   if (!el) return;
   const photoURL = userProfile?.photoURL || currentUser?.photoURL || '';
   if (photoURL) {
-    el.innerHTML = `<img src="${escH(photoURL)}" style="width:100%;height:100%;object-fit:cover;">`;
+    const img = document.createElement('img');
+    img.src = photoURL;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+    el.innerHTML = '';
+    el.appendChild(img);
   } else {
     el.textContent = (userProfile?.username||'?')[0].toUpperCase();
   }
@@ -2731,20 +2739,28 @@ async function doUploadToImgBB(blob) {
 }
 
 function applyNewPhotoURL(url) {
-  const imgTag = `<img src="${escH(url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  const imgTagRect = `<img src="${escH(url)}" style="width:100%;height:100%;object-fit:cover;">`;
+  if (!url) return;
+  console.log('Applying photo URL:', url);
+
+  function makeImg(u, extra) {
+    const img = document.createElement('img');
+    img.src = u;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;' + (extra||'');
+    img.onerror = () => console.warn('Gagal load gambar dari:', u);
+    return img;
+  }
 
   // Topbar avatar
   const ab = document.getElementById('avatarBtn');
-  if (ab) ab.innerHTML = imgTag;
+  if (ab) { ab.innerHTML = ''; ab.appendChild(makeImg(url, 'border-radius:50%;')); }
 
   // Settings preview
   const sp = document.getElementById('settingsAvatarPreview');
-  if (sp) sp.innerHTML = imgTagRect;
+  if (sp) { sp.innerHTML = ''; sp.appendChild(makeImg(url)); }
 
   // Profile page avatar
   const pa = document.getElementById('profAvatar');
-  if (pa) pa.innerHTML = imgTagRect;
+  if (pa) { pa.innerHTML = ''; pa.appendChild(makeImg(url)); }
 }
 
 function blobToBase64(blob) {
@@ -2822,8 +2838,17 @@ function loadProfilePage() {
   if (!userProfile) return;
   const photoURL = userProfile.photoURL || currentUser?.photoURL || '';
   const av = document.getElementById('profAvatar');
-  if (photoURL) av.innerHTML=`<img src="${escH(photoURL)}" style="width:100%;height:100%;object-fit:cover;">`;
-  else av.textContent=(userProfile.username||'?')[0].toUpperCase();
+  if (av) {
+    if (photoURL) {
+      const img = document.createElement('img');
+      img.src = photoURL;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+      av.innerHTML = '';
+      av.appendChild(img);
+    } else {
+      av.textContent = (userProfile.username||'?')[0].toUpperCase();
+    }
+  }
   setEl('profUsername', userProfile.username||'—');
   setEl('profMLID', userProfile.mlid||'—');
 
@@ -2923,7 +2948,7 @@ function buildUserCard(uid, p, uData) {
   const mmrShow = p.privacy?.mmr!==false ? (uData?.mmr??'—') : '🔒';
   const wlShow = p.privacy?.wl!==false;
   card.innerHTML=`
-    <div class="user-card-avatar">${p.photoURL?`<img src="${escH(p.photoURL)}">`:`${initial}`}</div>
+    <div class="user-card-avatar">${p.photoURL?`<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:`${initial}`}</div>
     <div class="user-card-info">
       <div class="user-card-name">${escH(p.username||'—')}</div>
       <div class="user-card-id">ID: ${escH(p.mlid||'—')}</div>
@@ -2958,7 +2983,7 @@ window.openPublicProfile = async (uid, username) => {
 
   let html=`
     <div class="profile-header">
-      <div class="profile-avatar">${p.photoURL?`<img src="${escH(p.photoURL)}">`:(p.username||'?')[0].toUpperCase()}</div>
+      <div class="profile-avatar">${p.photoURL?`<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:(p.username||'?')[0].toUpperCase()}</div>
       <div class="profile-info">
         <div class="profile-username">${escH(p.username||'—')}</div>
         <div class="profile-mlid"><div class="profile-mlid-badge">${escH(p.mlid||'—')}</div><div class="profile-mlid-label">ID Mobile Legends</div></div>
