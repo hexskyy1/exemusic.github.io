@@ -1570,16 +1570,22 @@ input:checked + .tog-track::after {
             <p style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.6;">Gunakan link di bawah sebagai <strong style="color:var(--t1)">Browser Source</strong> di OBS Studio.</p>
             <div class="form-grp"><label class="form-lbl">Ukuran Overlay</label>
               <select class="form-sel" id="obsSize" onchange="updateOBSLink()">
-                <option value="banner">Banner Lebar (1920x120)</option>
-                <option value="sidebar">Sidebar (300x500)</option>
-                <option value="widget">Widget Kotak (400x280)</option>
+                <option value="widget">Widget (400×280) — direkomendasikan</option>
+                <option value="banner">Banner Lebar (1920×120) — bawah layar</option>
+                <option value="sidebar">Sidebar (300×500) — samping layar</option>
+                <option value="compact">Compact (560×80) — super kecil</option>
               </select>
             </div>
             <div class="form-grp"><label class="form-lbl">Tema Overlay</label>
               <select class="form-sel" id="obsTheme" onchange="updateOBSLink()">
-                <option value="dark">Dark Gold (Default)</option>
-                <option value="darkblue">Dark Blue</option>
-                <option value="minimal">Minimal Transparan</option>
+                <option value="dark">Dark Gold — elegan</option>
+                <option value="neon">Neon Cyan — futuristik</option>
+                <option value="red">Blood Red — agresif</option>
+                <option value="purple">Royal Purple — royal</option>
+                <option value="minimal">Minimal Glass — transparan</option>
+                <option value="darkblue">Midnight Blue — clean</option>
+                <option value="forest">Forest — militar</option>
+                <option value="sunset">Sunset Orange — warm</option>
               </select>
             </div>
             <div class="mt14"><label class="form-lbl">Link Browser Source</label>
@@ -2963,33 +2969,57 @@ window.copyOBSLink = () => {
 window.openOBSPreview = () => goPage('overlay');
 
 function renderOBSPreview() {
-  const el=document.getElementById('obsPreviewWrap');
-  if(!el) return;
-  const w=dailyData.win||0,l=dailyData.lose||0,t=w+l;
-  const wr=t>0?Math.round(w/t*100):0;
-  const mmr=currentMMR!==null?currentMMR:'—';
-  el.innerHTML=`
-    <div style="background:#060810;border:1px solid rgba(240,180,41,0.2);border-radius:12px;padding:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center;box-shadow:0 0 40px rgba(240,180,41,0.15)">
-      <div style="text-align:center">
-        <div style="font-family:'Space Mono',monospace;font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Win</div>
-        <div style="font-family:'Space Mono',monospace;font-size:36px;font-weight:700;color:#10b981;line-height:1">${w}</div>
+  const el = document.getElementById('obsPreviewWrap');
+  if (!el) return;
+  const w   = dailyData.win  || 0;
+  const l   = dailyData.lose || 0;
+  const t   = w + l;
+  const wr  = t > 0 ? Math.round(w / t * 100) : 0;
+  const mmr = currentMMR !== null ? currentMMR : '—';
+  const un  = userProfile?.username || '—';
+
+  // Build iframe preview of current selected theme/size
+  const url = getOBSURL();
+  const size = document.getElementById('obsSize')?.value || 'widget';
+
+  // Dimension map
+  const dims = { widget:'400×280', banner:'1920×120', sidebar:'300×500', compact:'560×80' };
+  const dim  = dims[size] || '400×280';
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-family:var(--ff-display);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;">
+        Preview Langsung — ${dim}
       </div>
-      <div style="width:1px;height:50px;background:rgba(255,255,255,0.06)"></div>
-      <div style="text-align:center">
-        <div style="font-family:'Space Mono',monospace;font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Lose</div>
-        <div style="font-family:'Space Mono',monospace;font-size:36px;font-weight:700;color:#ef4444;line-height:1">${l}</div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--b1);border-radius:12px;overflow:hidden;padding:20px;display:flex;align-items:center;justify-content:center;min-height:140px;">
+        <iframe
+          src="${url}"
+          style="border:none;background:transparent;max-width:100%;transform-origin:center center;"
+          scrolling="no"
+          id="obsIframe"
+        ></iframe>
       </div>
-      <div style="width:1px;height:50px;background:rgba(255,255,255,0.06)"></div>
-      <div style="text-align:center">
-        <div style="font-family:'Space Mono',monospace;font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">WR</div>
-        <div style="font-family:'Space Mono',monospace;font-size:36px;font-weight:700;color:${wr>=60?'#10b981':wr>=50?'#f0b429':'#ef4444'};line-height:1">${wr}%</div>
-      </div>
-      <div style="width:1px;height:50px;background:rgba(255,255,255,0.06)"></div>
-      <div style="text-align:center">
-        <div style="font-family:'Space Mono',monospace;font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">MMR</div>
-        <div style="font-family:'Space Mono',monospace;font-size:36px;font-weight:700;color:#f0b429;line-height:1">${mmr}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--t3);text-align:center;">
+        Preview menggunakan data kamu saat ini secara realtime
       </div>
     </div>`;
+
+  // Scale iframe to fit preview container
+  const iframe = document.getElementById('obsIframe');
+  if (!iframe) return;
+  const sizeMap = { widget:[400,280], banner:[1920,120], sidebar:[300,500], compact:[560,80] };
+  const [iw, ih] = sizeMap[size] || [400,280];
+  iframe.width  = iw;
+  iframe.height = ih;
+  // Scale to fit ~360px wide
+  const maxW  = Math.min(360, el.clientWidth - 40);
+  const scale = Math.min(maxW / iw, 200 / ih, 1);
+  iframe.style.transform = `scale(${scale.toFixed(3)})`;
+  iframe.style.width  = iw + 'px';
+  iframe.style.height = ih + 'px';
+  // Adjust wrapper height
+  const previewDiv = iframe.parentElement;
+  previewDiv.style.minHeight = Math.ceil(ih * scale + 40) + 'px';
 }
 
 // ═══════════════════════════════════════════════════════
