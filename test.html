@@ -1986,6 +1986,16 @@ function fmtTS(ts) {
 function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function bumpEl(id) { const e=document.getElementById(id); if(!e)return; e.classList.remove('dc-bump'); void e.offsetWidth; e.classList.add('dc-bump'); }
 
+// ═══ IMGBB URL FIX ═══
+// ImgBB kadang mengembalikan URL format lama (i.ibb.co) padahal seharusnya (i.ibb.co.com)
+// Fungsi ini memastikan URL selalu dalam format yang benar
+function fixImgBBUrl(url) {
+  if (!url) return url;
+  // Ganti https://i.ibb.co/ → https://i.ibb.co.com/
+  // Pastikan tidak mengganti yang sudah benar (i.ibb.co.com)
+  return url.replace(/^https:\/\/i\.ibb\.co\/(?!com\/)/, 'https://i.ibb.co.com/');
+}
+
 window.showToast = (msg, type='ok') => {
   const dock = document.getElementById('toastDock');
   const t = document.createElement('div');
@@ -2091,7 +2101,6 @@ window.finishSetup = async () => {
   if (pass.length < 6) { showToast('Password min. 6 karakter','err'); return; }
   if (pass !== conf) { showToast('Password tidak cocok','err'); return; }
 
-  // simple hashing (bcrypt not available in browser, use SHA-256 via WebCrypto)
   const passHash = await sha256(pass);
   const btn = document.getElementById('setupFinishBtn');
   btn.disabled = true; btn.textContent = 'Menyimpan...';
@@ -2140,7 +2149,7 @@ function initApp() {
 function updateTopbar() {
   if (!currentUser || !userProfile) return;
   const ab = document.getElementById('avatarBtn');
-  const photoURL = userProfile.photoURL || currentUser.photoURL || '';
+  const photoURL = fixImgBBUrl(userProfile.photoURL || currentUser.photoURL || '');
   if (photoURL && ab) {
     const img = document.createElement('img');
     img.src = photoURL;
@@ -2492,7 +2501,6 @@ function loadSettings() {
   setChk('privWL', p.wl!==false);
   setChk('privHist', p.history!==false);
   setChk('privHeroes', p.heroes!==false);
-  // Load current avatar into settings preview
   loadSettingsAvatar();
 }
 function setVal(id,v){const e=document.getElementById(id);if(e)e.value=v;}
@@ -2501,7 +2509,7 @@ function setChk(id,v){const e=document.getElementById(id);if(e)e.checked=v;}
 function loadSettingsAvatar() {
   const el = document.getElementById('settingsAvatarPreview');
   if (!el) return;
-  const photoURL = userProfile?.photoURL || currentUser?.photoURL || '';
+  const photoURL = fixImgBBUrl(userProfile?.photoURL || currentUser?.photoURL || '');
   if (photoURL) {
     const img = document.createElement('img');
     img.src = photoURL;
@@ -2533,7 +2541,6 @@ window.handlePhotoSelect = (event) => {
     const img = new Image();
     img.onload = () => {
       cropImageEl = img;
-      // Reset sliders
       document.getElementById('cropZoom').value = 1;
       document.getElementById('cropX').value = 0;
       document.getElementById('cropY').value = 0;
@@ -2543,7 +2550,6 @@ window.handlePhotoSelect = (event) => {
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
-  // Reset input so same file can be selected again
   event.target.value = '';
 };
 
@@ -2566,13 +2572,11 @@ function drawCrop(canvasId, w, h, zoom, offsetX, offsetY) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, w, h);
 
-  // Draw circular clip
   ctx.save();
   ctx.beginPath();
   ctx.arc(w/2, h/2, Math.min(w,h)/2, 0, Math.PI*2);
   ctx.clip();
 
-  // Calculate draw dimensions
   const imgAR = cropImageEl.naturalWidth / cropImageEl.naturalHeight;
   let dw, dh;
   if (imgAR > 1) { dh = h * zoom; dw = dh * imgAR; }
@@ -2595,14 +2599,12 @@ window.resetCrop = () => {
 window.uploadAndSavePhoto = async () => {
   if (!cropImageEl || !currentUser) return;
 
-  // Get final cropped image as blob
   const canvas = document.createElement('canvas');
   canvas.width = 400; canvas.height = 400;
   const zoom = parseFloat(document.getElementById('cropZoom').value);
   const offsetX = parseInt(document.getElementById('cropX').value);
   const offsetY = parseInt(document.getElementById('cropY').value);
 
-  // Draw circular crop on temp canvas
   const ctx = canvas.getContext('2d');
   ctx.beginPath();
   ctx.arc(200, 200, 200, 0, Math.PI * 2);
@@ -2632,7 +2634,7 @@ async function doUploadToImgBB(blob) {
   progressWrap.classList.add('active');
   ringWrap.classList.add('active');
 
-  const circumference = 2 * Math.PI * 43; // ≈ 270.18
+  const circumference = 2 * Math.PI * 43;
   ringFill.style.strokeDasharray  = circumference;
   ringFill.style.strokeDashoffset = circumference;
 
@@ -2655,7 +2657,6 @@ async function doUploadToImgBB(blob) {
     setProgress(10, 'Menyiapkan gambar...');
     await sleep(150);
 
-    // Convert blob → base64 string (tanpa prefix data:...)
     setProgress(20, 'Mengkonversi...');
     const base64full = await blobToBase64(blob);
     const base64data = base64full.split(',')[1];
@@ -2663,19 +2664,16 @@ async function doUploadToImgBB(blob) {
     setProgress(30, 'Menghubungi ImgBB...');
     await sleep(100);
 
-    // Build FormData — ImgBB butuh field "key" dan "image" (base64)
     const form = new FormData();
     form.append('key', IMGBB_KEY);
     form.append('image', base64data);
 
     setProgress(35, 'Mengupload...');
 
-    // XHR untuk track progress upload
     const imgURL = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://api.imgbb.com/1/upload', true);
 
-      // Track upload byte progress → 35% sampai 85%
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const pct = 35 + (e.loaded / e.total) * 50;
@@ -2689,13 +2687,19 @@ async function doUploadToImgBB(blob) {
           try { data = JSON.parse(xhr.responseText); }
           catch { reject(new Error('Response bukan JSON: ' + xhr.responseText.slice(0,100))); return; }
 
-          console.log('ImgBB Response:', JSON.stringify(data, null, 2)); // debug
+          console.log('ImgBB Response:', JSON.stringify(data, null, 2));
 
           if (data.success && data.data) {
-            // Ambil direct image URL — prioritas: image.url > display_url > url
-            const directURL = data.data?.image?.url || data.data?.display_url || data.data?.url;
-            if (directURL) resolve(directURL);
-            else reject(new Error('ImgBB tidak mengembalikan URL gambar'));
+            // Ambil URL dari response ImgBB
+            const rawURL = data.data?.image?.url || data.data?.display_url || data.data?.url;
+            if (rawURL) {
+              // ✅ FIX: Pastikan URL format i.ibb.co.com (bukan i.ibb.co)
+              const fixedURL = fixImgBBUrl(rawURL);
+              console.log('Raw URL:', rawURL, '→ Fixed URL:', fixedURL);
+              resolve(fixedURL);
+            } else {
+              reject(new Error('ImgBB tidak mengembalikan URL gambar'));
+            }
           } else {
             const errMsg = data.error?.message || data.status_txt || 'Upload gagal';
             reject(new Error(`ImgBB: ${errMsg} (status ${data.status||'?'})`));
@@ -2707,7 +2711,7 @@ async function doUploadToImgBB(blob) {
 
       xhr.addEventListener('error',   () => reject(new Error('Network error — cek koneksi internet')));
       xhr.addEventListener('timeout', () => reject(new Error('Timeout — koneksi terlalu lambat')));
-      xhr.timeout = 60000; // 60 detik timeout
+      xhr.timeout = 60000;
 
       xhr.send(form);
     });
@@ -2715,7 +2719,7 @@ async function doUploadToImgBB(blob) {
     setProgress(88, 'Menyimpan ke profil...');
     await sleep(200);
 
-    // Simpan URL ke Firebase
+    // Simpan URL yang sudah di-fix ke Firebase
     await update(ref(db, `users/${currentUser.uid}/profile`), { photoURL: imgURL });
     userProfile = { ...userProfile, photoURL: imgURL };
 
@@ -2740,7 +2744,9 @@ async function doUploadToImgBB(blob) {
 
 function applyNewPhotoURL(url) {
   if (!url) return;
-  console.log('Applying photo URL:', url);
+  // Pastikan URL sudah dalam format yang benar sebelum ditampilkan
+  const fixedUrl = fixImgBBUrl(url);
+  console.log('Applying photo URL:', fixedUrl);
 
   function makeImg(u, extra) {
     const img = document.createElement('img');
@@ -2752,15 +2758,15 @@ function applyNewPhotoURL(url) {
 
   // Topbar avatar
   const ab = document.getElementById('avatarBtn');
-  if (ab) { ab.innerHTML = ''; ab.appendChild(makeImg(url, 'border-radius:50%;')); }
+  if (ab) { ab.innerHTML = ''; ab.appendChild(makeImg(fixedUrl, 'border-radius:50%;')); }
 
   // Settings preview
   const sp = document.getElementById('settingsAvatarPreview');
-  if (sp) { sp.innerHTML = ''; sp.appendChild(makeImg(url)); }
+  if (sp) { sp.innerHTML = ''; sp.appendChild(makeImg(fixedUrl)); }
 
   // Profile page avatar
   const pa = document.getElementById('profAvatar');
-  if (pa) { pa.innerHTML = ''; pa.appendChild(makeImg(url)); }
+  if (pa) { pa.innerHTML = ''; pa.appendChild(makeImg(fixedUrl)); }
 }
 
 function blobToBase64(blob) {
@@ -2782,13 +2788,11 @@ window.saveProfile = async () => {
 
   if (!newMLID) { showToast('ID ML tidak boleh kosong','err'); return; }
 
-  // If changing username, require password
   if (newUsername !== userProfile.username) {
     if (!passInput) { showToast('Masukkan password untuk ubah username','err'); return; }
     if (!/^[a-zA-Z0-9_]{3,24}$/.test(newUsername)) { showToast('Username tidak valid','err'); return; }
     const passHash = await sha256(passInput);
     if (passHash !== userProfile.passHash) { showToast('Password salah','err'); return; }
-    // Remove old username mapping
     await remove(ref(db, `usernames/${userProfile.username.toLowerCase()}`));
     await set(ref(db, `usernames/${newUsername.toLowerCase()}`), currentUser.uid);
   }
@@ -2836,7 +2840,7 @@ window.changePassword = async () => {
 // ═══ PROFILE PAGE ═══
 function loadProfilePage() {
   if (!userProfile) return;
-  const photoURL = userProfile.photoURL || currentUser?.photoURL || '';
+  const photoURL = fixImgBBUrl(userProfile.photoURL || currentUser?.photoURL || '');
   const av = document.getElementById('profAvatar');
   if (av) {
     if (photoURL) {
@@ -2852,7 +2856,6 @@ function loadProfilePage() {
   setEl('profUsername', userProfile.username||'—');
   setEl('profMLID', userProfile.mlid||'—');
 
-  // Badges
   const vals=Object.values(heroesData);
   const total=vals.reduce((s,h)=>s+(h.win||0)+(h.lose||0),0);
   const badges=[];
@@ -2947,8 +2950,10 @@ function buildUserCard(uid, p, uData) {
   const wr=total>0?Math.round(wins/total*100):0;
   const mmrShow = p.privacy?.mmr!==false ? (uData?.mmr??'—') : '🔒';
   const wlShow = p.privacy?.wl!==false;
+  // ✅ FIX URL foto di user card explore
+  const photoURL = fixImgBBUrl(p.photoURL || '');
   card.innerHTML=`
-    <div class="user-card-avatar">${p.photoURL?`<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:`${initial}`}</div>
+    <div class="user-card-avatar">${photoURL?`<img src="${photoURL}" style="width:100%;height:100%;object-fit:cover;">`:`${initial}`}</div>
     <div class="user-card-info">
       <div class="user-card-name">${escH(p.username||'—')}</div>
       <div class="user-card-id">ID: ${escH(p.mlid||'—')}</div>
@@ -2976,14 +2981,15 @@ window.openPublicProfile = async (uid, username) => {
   const losses=heroes.reduce((s,h)=>s+(h.lose||0),0);
   const total=wins+losses;
   const wr=total>0?Math.round(wins/total*100):0;
-  const wrC=wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)';
   const mmr=priv.mmr!==false?u.mmr:'🔒';
   const daily=u.daily||{};
   const wl=priv.wl!==false;
+  // ✅ FIX URL foto di public profile
+  const pubPhotoURL = fixImgBBUrl(p.photoURL || '');
 
   let html=`
     <div class="profile-header">
-      <div class="profile-avatar">${p.photoURL?`<img src="${p.photoURL}" style="width:100%;height:100%;object-fit:cover;">`:(p.username||'?')[0].toUpperCase()}</div>
+      <div class="profile-avatar">${pubPhotoURL?`<img src="${pubPhotoURL}" style="width:100%;height:100%;object-fit:cover;">`:(p.username||'?')[0].toUpperCase()}</div>
       <div class="profile-info">
         <div class="profile-username">${escH(p.username||'—')}</div>
         <div class="profile-mlid"><div class="profile-mlid-badge">${escH(p.mlid||'—')}</div><div class="profile-mlid-label">ID Mobile Legends</div></div>
@@ -3116,13 +3122,9 @@ window.showPage = (name) => {
   const p=document.getElementById(`page-${name}`);
   if(p) p.classList.add('active');
 
-  // Desktop nav active state
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
-
-  // Bottom nav active state
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
 
-  // Hide nav elements on auth/setup pages
   const isAuthPage = ['auth','setup'].includes(name);
   const fab = document.getElementById('fabBtn');
   const ubar = document.getElementById('updateBar');
@@ -3176,7 +3178,6 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.on').forEach(m=>m.classList.remove('on')); });
 
-// ═══ SETUP PAGE show properly ═══
 function showSetupPage() {
   document.getElementById('updateBar').style.display = 'none';
   document.getElementById('fabBtn').style.display = 'none';
