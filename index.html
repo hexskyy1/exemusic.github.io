@@ -65,7 +65,11 @@
 /* ═══════════════════════════════════════
    RESET & BASE
 ═══════════════════════════════════════ */
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+*, *::before, *::after {
+  margin:0; padding:0; box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  min-width: 0; /* Cegah flex/grid children melar keluar */
+}
 html { scroll-behavior:smooth; font-size:16px; }
 body {
   font-family: var(--ff-body);
@@ -74,10 +78,12 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-button, input, select { font-family: inherit; }
+button, input, select, textarea { font-family: inherit; max-width: 100%; }
 img { display: block; max-width: 100%; }
 
 /* SCROLLBAR */
@@ -170,7 +176,7 @@ body::before {
   display: flex; align-items: center; gap: 10px;
   font-family: var(--ff-display); font-size: 10px; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase; color: var(--t3);
-  margin-bottom: 14px;
+  margin-bottom: 14px; min-width: 0; overflow: hidden;
 }
 .section-hd::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, var(--b1), transparent); }
 .section-hd .cnt {
@@ -191,6 +197,7 @@ body::before {
   letter-spacing: 0.4px;
   cursor: pointer; transition: var(--transition);
   white-space: nowrap; flex-shrink: 0; text-decoration: none;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .btn-gold {
   background: linear-gradient(135deg, var(--gold), var(--gold2));
@@ -228,13 +235,14 @@ body::before {
   color: var(--t3); margin-bottom: 6px;
 }
 .form-inp, .form-sel {
-  width: 100%;
+  width: 100%; max-width: 100%; box-sizing: border-box;
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r-sm); padding: 0 14px; height: 44px;
   font-family: var(--ff-body); font-size: 15px; font-weight: 400;
   color: var(--t1); outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
   -webkit-appearance: none;
+  overflow: hidden; text-overflow: ellipsis;
 }
 .form-inp:focus, .form-sel:focus {
   border-color: var(--gold);
@@ -255,8 +263,8 @@ body::before {
 }
 .toggle-row:hover { border-color: rgba(255,255,255,.1); }
 .toggle-info { flex:1; min-width:0; }
-.toggle-ttl { font-weight: 600; font-size: 14px; }
-.toggle-sub { font-size: 12px; color: var(--t3); margin-top: 2px; }
+.toggle-ttl { font-weight: 600; font-size: 14px; overflow-wrap: break-word; }
+.toggle-sub { font-size: 12px; color: var(--t3); margin-top: 2px; overflow-wrap: break-word; line-height: 1.4; }
 .tog {
   position: relative; width: 44px; height: 26px;
   flex-shrink: 0; margin-left: 12px;
@@ -293,7 +301,7 @@ input:checked + .tog-track::after {
 }
 .topbar-inner {
   display: flex; align-items: center;
-  height: 58px; gap: 8px;
+  height: 58px; gap: 8px; min-width: 0; overflow: hidden;
 }
 .brand {
   display: flex; align-items: center; gap: 9px;
@@ -312,6 +320,7 @@ input:checked + .tog-track::after {
 .brand-name {
   font-family: var(--ff-display); font-size: 14px; font-weight: 800;
   color: var(--t1); letter-spacing: .8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .brand-name em { color: var(--gold); font-style: normal; }
 .topbar-nav {
@@ -366,10 +375,11 @@ input:checked + .tog-track::after {
 /* DROPDOWN */
 .drop-wrap { position: relative; }
 .drop-menu {
-  position: absolute; top: calc(100% + 8px); right: 0;
+  position: fixed; top: auto; right: 12px;
   background: var(--bg1); border: 1px solid var(--b1);
   border-radius: var(--r); padding: 6px;
-  min-width: 200px; box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  width: min(220px, calc(100vw - 24px));
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
   opacity: 0; pointer-events: none; transform: translateY(-6px) scale(.97);
   transition: all .18s; z-index: 300;
 }
@@ -422,10 +432,11 @@ input:checked + .tog-track::after {
 }
 .auth-card {
   background: var(--bg1); border: 1px solid var(--b1);
-  border-radius: var(--r-xl); padding: clamp(28px, 6vw, 44px);
-  width: 100%; max-width: 420px;
+  border-radius: var(--r-xl); padding: clamp(20px, 6vw, 44px);
+  width: 100%; max-width: min(420px, calc(100vw - 32px));
   box-shadow: 0 0 0 1px rgba(255,255,255,.03), 0 32px 80px rgba(0,0,0,.6);
   animation: slide-up .4s ease;
+  overflow: hidden;
 }
 @keyframes slide-up { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
 .auth-logo { text-align: center; margin-bottom: 32px; }
@@ -484,13 +495,14 @@ input:checked + .tog-track::after {
 }
 .home-hero-grid {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: 1fr minmax(0, 300px);
   gap: 20px; align-items: start;
 }
 .hw-greet { font-size: 12px; color: var(--t3); margin-bottom: 4px; letter-spacing: .5px; }
 .hw-name {
-  font-family: var(--ff-display); font-size: clamp(22px, 4vw, 30px); font-weight: 800;
+  font-family: var(--ff-display); font-size: clamp(20px, 4vw, 30px); font-weight: 800;
   color: var(--t1); line-height: 1.1; margin-bottom: 10px;
+  overflow-wrap: break-word; word-break: break-word;
 }
 .hw-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
 .meta-pill {
@@ -498,9 +510,13 @@ input:checked + .tog-track::after {
   font-size: 11px; color: var(--t2);
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: 99px; padding: 4px 10px;
+  max-width: 100%; overflow: hidden;
+}
+.meta-pill span:last-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .meta-pill .ic { color: var(--t3); }
-.qs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.qs-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .qs-card {
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r-sm); padding: 14px;
@@ -517,7 +533,7 @@ input:checked + .tog-track::after {
 .daily-card {
   background: var(--bg1); border: 1px solid var(--b3);
   border-radius: var(--r); padding: 18px;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; min-width: 0;
 }
 .daily-card::before {
   content:''; position: absolute; inset: 0; pointer-events: none;
@@ -531,10 +547,11 @@ input:checked + .tog-track::after {
   display: flex; align-items: center; justify-content: space-between;
   background: var(--bg2); border-radius: var(--r-sm);
   padding: 10px 14px; border: 1px solid var(--b1);
+  min-width: 0; overflow: hidden;
 }
-.dc-l { display: flex; align-items: center; gap: 8px; }
+.dc-l { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .dc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.dc-lbl { font-family: var(--ff-display); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t3); }
+.dc-lbl { font-family: var(--ff-display); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dc-r { display: flex; align-items: center; gap: 8px; }
 .dc-num { font-family: var(--ff-mono); font-size: 22px; font-weight: 700; min-width: 32px; text-align: center; }
 .dc-win  .dc-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
@@ -564,7 +581,7 @@ input:checked + .tog-track::after {
   border-radius: var(--r-xs); padding: 0 12px; height: 36px;
   font-family: var(--ff-mono); font-size: 13px; font-weight: 700;
   color: var(--t1); outline: none; transition: border-color var(--transition);
-  min-width: 0;
+  min-width: 0; max-width: 100%; width: 0; /* flex child yg bisa menyusut */
 }
 .mmr-inp:focus { border-color: var(--gold); }
 .mmr-inp::placeholder { color: var(--t3); font-weight: 400; }
@@ -575,7 +592,7 @@ input:checked + .tog-track::after {
 ═══════════════════════════════════════ */
 .home-content { padding: clamp(20px, 3vw, 32px) 0 clamp(80px, 10vw, 80px); }
 .home-grid {
-  display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start;
+  display: grid; grid-template-columns: 1fr minmax(0, 360px); gap: 24px; align-items: start;
 }
 
 /* ═══════════════════════════════════════
@@ -593,7 +610,7 @@ input:checked + .tog-track::after {
 .hist-row.ok::before   { background: var(--gold); }
 .hist-row.bad::before  { background: var(--red); }
 .hist-row:hover { border-color: rgba(255,255,255,.09); transform: translateX(2px); }
-.hist-date { font-family: var(--ff-display); font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--t3); min-width: 76px; flex-shrink: 0; }
+.hist-date { font-family: var(--ff-display); font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--t3); min-width: 0; flex-shrink: 0; }
 .hist-chips { display: flex; align-items: center; gap: 5px; flex:1; flex-wrap: wrap; }
 .chip {
   font-family: var(--ff-display); font-size: 10px; font-weight: 700;
@@ -602,7 +619,7 @@ input:checked + .tog-track::after {
 .chip-w  { background: var(--greena); color: var(--green); border: 1px solid rgba(14,196,122,.2); }
 .chip-l  { background: var(--reda);   color: var(--red);   border: 1px solid rgba(232,64,64,.2); }
 .chip-g  { background: var(--cyana);  color: var(--cyan);  border: 1px solid var(--b4); }
-.hist-wr { font-family: var(--ff-mono); font-size: 12px; font-weight: 700; min-width: 38px; text-align: right; flex-shrink: 0; }
+.hist-wr { font-family: var(--ff-mono); font-size: 12px; font-weight: 700; min-width: 0; text-align: right; flex-shrink: 0; }
 .hist-mmr-grp { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .hist-mmr-val { font-family: var(--ff-mono); font-size: 14px; font-weight: 700; color: var(--gold); }
 .hist-delta { font-family: var(--ff-display); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
@@ -630,7 +647,7 @@ input:checked + .tog-track::after {
 
 /* HERO TOOLBAR */
 .hero-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-.hero-search { position: relative; flex:1; min-width: 140px; }
+.hero-search { position: relative; flex:1; min-width: 0; }
 .hero-search input {
   width: 100%; background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r-sm); padding: 0 14px 0 38px; height: 38px;
@@ -652,7 +669,7 @@ input:checked + .tog-track::after {
 .rf.rf-wr.on { background: var(--greena); border-color: rgba(14,196,122,.3); color: var(--green); }
 
 /* HERO GRID */
-.hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+.hero-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr)); gap: 10px; }
 .hcard {
   background: var(--bg1); border: 1px solid var(--b1);
   border-radius: var(--r); overflow: hidden;
@@ -679,9 +696,9 @@ input:checked + .tog-track::after {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.hcard-info { flex:1; min-width: 0; }
-.hcard-name { font-family: var(--ff-display); font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hcard-role-lbl { font-size: 11px; color: var(--t3); margin-top: 2px; }
+.hcard-info { flex:1; min-width: 0; overflow: hidden; }
+.hcard-name { font-family: var(--ff-display); font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.hcard-role-lbl { font-size: 11px; color: var(--t3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hcard-wr-col { text-align: right; flex-shrink: 0; }
 .hcard-wr-val { font-family: var(--ff-mono); font-size: 18px; font-weight: 700; line-height: 1; }
 .hcard-wr-lbl { font-size: 9px; color: var(--t3); margin-top: 2px; font-family: var(--ff-display); font-weight: 600; text-transform: uppercase; }
@@ -738,9 +755,9 @@ input:checked + .tog-track::after {
 .profile-page { padding: clamp(20px,3vw,36px) 0 80px; }
 .profile-hd {
   background: var(--bg1); border: 1px solid var(--b1);
-  border-radius: var(--r-lg); padding: clamp(20px,4vw,30px);
-  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
-  margin-bottom: 20px; position: relative; overflow: hidden;
+  border-radius: var(--r-lg); padding: clamp(16px,4vw,28px);
+  display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 20px; position: relative; overflow: hidden; min-width: 0;
 }
 .profile-hd::before {
   content:''; position: absolute; inset: 0; pointer-events: none;
@@ -757,9 +774,9 @@ input:checked + .tog-track::after {
 }
 .profile-av img { width:100%; height:100%; object-fit:cover; }
 .profile-inf { flex:1; min-width: 0; }
-.profile-uname { font-family: var(--ff-display); font-size: clamp(20px,3vw,26px); font-weight: 800; color: var(--t1); line-height: 1.1; }
+.profile-uname { font-family: var(--ff-display); font-size: clamp(18px,3vw,24px); font-weight: 800; color: var(--t1); line-height: 1.1; overflow-wrap: break-word; word-break: break-all; }
 .profile-id-row { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
-.profile-id-badge { font-family: var(--ff-mono); font-size: 11px; font-weight: 700; color: var(--cyan); background: var(--cyana); border: 1px solid var(--b4); border-radius: 5px; padding: 2px 8px; }
+.profile-id-badge { font-family: var(--ff-mono); font-size: 11px; font-weight: 700; color: var(--cyan); background: var(--cyana); border: 1px solid var(--b4); border-radius: 5px; padding: 2px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
 .profile-id-lbl { font-size: 11px; color: var(--t3); }
 .profile-badges { display: flex; align-items: center; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
 .pbadge { font-family: var(--ff-display); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; }
@@ -800,12 +817,13 @@ input:checked + .tog-track::after {
 .explore-search-inp:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,171,42,.1); }
 .explore-search-inp::placeholder { color: var(--t3); }
 .explore-search-ic { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--t3); }
-.explore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.explore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 10px; }
 .user-card {
   background: var(--bg1); border: 1px solid var(--b1);
-  border-radius: var(--r); padding: 16px 18px;
+  border-radius: var(--r); padding: 14px 16px;
   cursor: pointer; transition: all .22s;
-  display: flex; align-items: center; gap: 13px;
+  display: flex; align-items: center; gap: 12px;
+  min-width: 0; overflow: hidden;
 }
 .user-card:hover { border-color: var(--b3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
 .uc-av {
@@ -817,8 +835,8 @@ input:checked + .tog-track::after {
 }
 .uc-av img { width:100%; height:100%; object-fit:cover; }
 .uc-info { flex:1; min-width:0; }
-.uc-name { font-family: var(--ff-display); font-size: 14px; font-weight: 700; }
-.uc-id   { font-family: var(--ff-mono); font-size: 11px; color: var(--t3); margin-top: 2px; }
+.uc-name { font-family: var(--ff-display); font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uc-id   { font-family: var(--ff-mono); font-size: 11px; color: var(--t3); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .uc-stats { display: flex; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
 .ucs { font-size: 11px; font-family: var(--ff-display); font-weight: 700; letter-spacing: .3px; }
 .ucs.g  { color: var(--green); }
@@ -831,7 +849,7 @@ input:checked + .tog-track::after {
    SETTINGS
 ═══════════════════════════════════════ */
 .settings-page { padding: clamp(20px,3vw,36px) 0 80px; }
-.settings-grid { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+.settings-grid { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 20px; align-items: start; }
 .settings-nav { position: sticky; top: 74px; }
 .snav-list { list-style: none; }
 .snav-item {
@@ -845,23 +863,28 @@ input:checked + .tog-track::after {
 .snav-item.on { color: var(--gold); border-left: 2px solid var(--gold); padding-left: 10px; }
 .settings-sec {
   background: var(--bg1); border: 1px solid var(--b1);
-  border-radius: var(--r); padding: clamp(18px, 3vw, 24px); margin-bottom: 14px;
+  border-radius: var(--r); padding: clamp(16px, 3vw, 24px); margin-bottom: 14px;
+  overflow: hidden; /* clip content ke dalam card */
+  min-width: 0;
 }
 .settings-sec-ttl {
   font-family: var(--ff-display); font-size: 13px; font-weight: 700;
   margin-bottom: 16px; color: var(--t1);
   display: flex; align-items: center; gap: 8px;
+  overflow-wrap: break-word; word-break: break-word;
+  flex-wrap: wrap;
 }
 
 /* PHOTO UPLOAD */
 .photo-upload {
-  display: flex; align-items: center; gap: 18px;
+  display: flex; align-items: flex-start; gap: 16px;
   margin-bottom: 20px; padding: 16px;
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r); transition: border-color var(--transition);
+  flex-wrap: wrap;
 }
 .photo-upload:hover { border-color: rgba(255,255,255,.1); }
-.photo-av-wrap { position: relative; flex-shrink: 0; }
+.photo-av-wrap { position: relative; flex-shrink: 0; align-self: flex-start; }
 .photo-av {
   width: 76px; height: 76px; border-radius: 50%;
   background: var(--bg3); border: 3px solid var(--b3);
@@ -883,9 +906,9 @@ input:checked + .tog-track::after {
 .ring-svg { width:100%; height:100%; transform: rotate(-90deg); }
 .ring-track { fill:none; stroke: rgba(255,255,255,.08); stroke-width: 3; }
 .ring-fill { fill:none; stroke: var(--gold); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 270; stroke-dashoffset: 270; transition: stroke-dashoffset .15s ease; filter: drop-shadow(0 0 4px rgba(232,171,42,.8)); }
-.photo-info { flex:1; }
+.photo-info { flex:1; min-width: 0; overflow: hidden; }
 .photo-ttl { font-family: var(--ff-display); font-size: 13px; font-weight: 700; margin-bottom: 3px; }
-.photo-hint { font-size: 11px; color: var(--t3); line-height: 1.5; margin-bottom: 10px; }
+.photo-hint { font-size: 11px; color: var(--t3); line-height: 1.5; margin-bottom: 10px; overflow-wrap: break-word; }
 .upload-prog { display: none; margin-top: 8px; }
 .upload-prog.active { display: block; }
 .prog-track { height: 5px; background: var(--bg3); border-radius: 99px; overflow: hidden; margin-bottom: 5px; }
@@ -906,8 +929,13 @@ input:checked + .tog-track::after {
   display: flex; align-items: center; gap: 10px;
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 10px;
+  overflow: hidden; min-width: 0;
 }
-.obs-link-url { font-family: var(--ff-mono); font-size: 11px; color: var(--cyan); flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obs-link-url {
+  font-family: var(--ff-mono); font-size: 11px; color: var(--cyan);
+  flex:1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0;
+}
 
 /* ═══════════════════════════════════════
    MODAL
@@ -922,10 +950,11 @@ input:checked + .tog-track::after {
 .modal-overlay.on { opacity:1; pointer-events:all; }
 .modal-box {
   background: var(--bg1); border: 1px solid var(--b1);
-  border-radius: var(--r-lg); padding: clamp(20px, 4vw, 28px);
-  width: 100%; max-width: 420px;
+  border-radius: var(--r-lg); padding: clamp(16px, 4vw, 28px);
+  width: 100%; max-width: min(420px, calc(100vw - 24px));
   transform: scale(.96) translateY(10px); transition: transform .22s;
   box-shadow: 0 32px 80px rgba(0,0,0,.7);
+  overflow: hidden; overflow-y: auto; max-height: 92dvh;
 }
 .modal-overlay.on .modal-box { transform: scale(1) translateY(0); }
 .modal-ttl {
@@ -952,10 +981,10 @@ input:checked + .tog-track::after {
 }
 .crop-sliders { display: flex; flex-direction: column; gap: 8px; }
 .crop-slider-row { display: flex; align-items: center; gap: 10px; }
-.crop-slider-lbl { font-family: var(--ff-display); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); min-width: 48px; }
+.crop-slider-lbl { font-family: var(--ff-display); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--t3); width: 48px; flex-shrink: 0; }
 .crop-slider { flex:1; -webkit-appearance:none; appearance:none; height: 4px; background: var(--bg3); border-radius:99px; outline:none; cursor:pointer; }
 .crop-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background: var(--gold); box-shadow: 0 0 8px rgba(232,171,42,.5); cursor:pointer; }
-.crop-val { font-family: var(--ff-mono); font-size: 11px; min-width: 32px; text-align: right; }
+.crop-val { font-family: var(--ff-mono); font-size: 11px; width: 32px; flex-shrink: 0; text-align: right; }
 .final-prev-row {
   display: flex; align-items: center; gap: 13px;
   padding: 11px 13px; background: var(--bg2);
@@ -973,13 +1002,17 @@ input:checked + .tog-track::after {
   position: fixed; top: 70px; right: 16px; z-index: 999;
   display: flex; flex-direction: column; gap: 6px;
   max-width: calc(100vw - 32px);
+  width: calc(100vw - 32px);
+  max-width: 320px;
 }
 .toast {
   background: var(--bg2); border: 1px solid var(--b1);
   border-radius: var(--r-sm); padding: 10px 15px;
   font-family: var(--ff-display); font-size: 12px; font-weight: 600;
   color: var(--t1); box-shadow: 0 4px 20px rgba(0,0,0,.5);
-  display: flex; align-items: center; gap: 9px; min-width: 220px;
+  display: flex; align-items: center; gap: 9px;
+  min-width: min(220px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
   animation: toast-in .28s ease, toast-out .28s ease 2.3s forwards;
   letter-spacing: .2px;
 }
@@ -1003,7 +1036,7 @@ input:checked + .tog-track::after {
   border-top: 1px solid var(--b1);
   padding-bottom: var(--safe-b);
 }
-.bnav-inner { display: flex; align-items: stretch; justify-content: space-around; }
+.bnav-inner { display: flex; align-items: stretch; justify-content: space-around; width: 100%; }
 .bnav-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   padding: 10px 6px; flex: 1;
@@ -1017,6 +1050,8 @@ input:checked + .tog-track::after {
   font-family: var(--ff-display); font-size: 9px; font-weight: 700;
   letter-spacing: .5px; text-transform: uppercase;
   color: var(--t3); transition: color .15s; margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%;
 }
 .bnav-btn.active .bnav-lbl { color: var(--gold); }
 .bnav-btn.active .ic { color: var(--gold); filter: drop-shadow(0 0 5px rgba(232,171,42,.6)); }
@@ -1427,11 +1462,14 @@ input:checked + .tog-track::after {
 </div>
 
 <!-- PUBLIC PROFILE -->
-<div class="page" id="page-public">
+<div class="page" id="page-user">
   <div class="public-profile">
     <div class="wrap-md">
-      <div style="margin-bottom:16px">
+      <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
         <button class="btn btn-ghost btn-sm" onclick="goBack()"><span class="ic ic-sm ic-back"></span> Kembali</button>
+        <div id="pubShareBtn" style="margin-left:auto;display:none;">
+          <button class="btn btn-ghost btn-sm" id="pubShareBtnInner" onclick=""><span class="ic ic-sm ic-copy"></span> Share Profil</button>
+        </div>
       </div>
       <div id="publicProfileContent"></div>
     </div>
@@ -1878,7 +1916,8 @@ function initApp() {
   subscribeUserData();
   subscribeLastUpdate();
   loadOBSLink();
-  showPage('home');
+  // Baca URL saat ini — kalau ada route langsung navigasi ke sana
+  initRoute();
 }
 
 function updateTopbar() {
@@ -2776,80 +2815,107 @@ function buildUserCard(uid, p, uData) {
   return card;
 }
 
-window.openPublicProfile = async (uid, username) => {
-  const el=document.getElementById('publicProfileContent');
-  el.innerHTML='<div class="empty-state"><div >Memuat profil...</div></div>';
-  goPage('public');
-  const snap = await get(ref(db,`users/${uid}`));
-  if (!snap.exists()) { el.innerHTML='<div class="empty-state"><div >Profil tidak ditemukan.</div></div>'; return; }
-  const u = snap.val();
-  const p = u.profile||{};
-  const priv = p.privacy||{};
+// _renderPublicProfile — dipanggil dari routing system
+// Menerima uid + data snapshot, merender ke #publicProfileContent
+async function _renderPublicProfile(uid, u) {
+  const el = document.getElementById('publicProfileContent');
+  const p = u.profile || {};
+  const priv = p.privacy || {};
 
-  const heroes=Object.values(u.heroes||{});
-  const wins=heroes.reduce((s,h)=>s+(h.win||0),0);
-  const losses=heroes.reduce((s,h)=>s+(h.lose||0),0);
-  const total=wins+losses;
-  const wr=total>0?Math.round(wins/total*100):0;
-  const mmr=priv.mmr!==false?u.mmr:'🔒';
-  const daily=u.daily||{};
-  const wl=priv.wl!==false;
-  // ✅ FIX URL foto di public profile
-  const pubPhotoURL = fixImgBBUrl(p.photoURL || '');
-
-  let html=`
-    <div class="profile-hd">
-      <div class="profile-av">${pubPhotoURL?`<img src="${pubPhotoURL}" style="width:100%;height:100%;object-fit:cover;">`:(p.username||'?')[0].toUpperCase()}</div>
-      <div class="profile-inf">
-        <div class="profile-uname">${escH(p.username||'—')}</div>
-        <div class="profile-id-row"><div class="profile-id-badge">${escH(p.mlid||'—')}</div><div class="profile-id-lbl">ID Mobile Legends</div></div>
-      </div>
-    </div>
-    <div class="profile-stats-row" style="margin-bottom:24px">
-      <div class="pstat"><div class="pstat-val c-gold">${mmr!==null&&mmr!==undefined?mmr:'—'}</div><div class="pstat-lbl">MMR</div></div>
-      <div class="pstat"><div class="pstat-val c-green">${wl?daily.win||0:'🔒'}</div><div class="pstat-lbl">Win Hari Ini</div></div>
-      <div class="pstat"><div class="pstat-val c-red">${wl?daily.lose||0:'🔒'}</div><div class="pstat-lbl">Lose Hari Ini</div></div>
-    </div>`;
-
-  if (priv.heroes!==false && heroes.length) {
-    html+=`<div class="section-hd">⚔️ Hero Stats</div>
-    <div class="hero-grid" style="margin-bottom:24px">`;
-    Object.entries(u.heroes||{}).sort((a,b)=>{if(b[1].main&&!a[1].main)return 1;if(a[1].main&&!b[1].main)return -1;return a[1].name.localeCompare(b[1].name);})
-      .forEach(([id,h],i)=>{html+=buildHeroCardHTML(id,h,i);});
-    html+=`</div>`;
+  // Tampilkan tombol share
+  const shareWrap = document.getElementById('pubShareBtn');
+  const shareBtn  = document.getElementById('pubShareBtnInner');
+  if (shareWrap && shareBtn) {
+    shareWrap.style.display = 'block';
+    shareBtn.onclick = () => shareProfile(uid, p.username);
   }
 
-  if (priv.history!==false) {
-    const today=todayStr();
-    const histEntries=Object.entries(u.history||{}).filter(([d,v])=>d!==today&&v&&v.win!==undefined&&v.lose!==undefined).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20);
-    html+=`<div class="section-hd">📜 History Harian <span class="stag">${histEntries.length} entri</span></div>
-    <div class="hist-list">`;
-    if(!histEntries.length) html+=`<div class="empty-state"><div >Belum ada history.</div></div>`;
-    else histEntries.forEach(([d,v])=>{
-      const w2=v.win||0,l2=v.lose||0,t2=w2+l2;
-      const wr2=t2>0?Math.round(w2/t2*100):0;
-      const wrC2=wr2>=60?'var(--green)':wr2>=50?'var(--gold)':'var(--red)';
-      const cls2=wr2>=60?'good':wr2>=50?'ok':'bad';
-      const mmrE=v.mmr_end??null,mmrS=v.mmr_start??null;
-      const delta2=(mmrE!==null&&mmrS!==null)?mmrE-mmrS:null;
-      const dCls2=delta2===null?'z':delta2>0?'p':delta2<0?'n':'z';
-      const dStr2=delta2===null?'±?':delta2>0?`+${delta2}`:delta2===0?'±0':`${delta2}`;
-      html+=`<div class="hist-row ${cls2}">
-        <div class="hist-date">${fmtDate(d)}</div>
-        <div class="hist-chips"><span class="chip chip-w">W ${w2}</span><span class="chip chip-l">L ${l2}</span><span class="chip chip-g">🎮 ${t2}</span></div>
-        <div class="hist-wr" style="color:${wrC2}">${wr2}%</div>
-        <div class="hist-mmr-grp"><div><div style="font-size:10px;color:var(--text3)">MMR</div><div class="hist-mmr-val">${mmrE!==null?mmrE:'—'}</div></div><span class="hist-delta ${dCls2}">${dStr2}</span></div>
-      </div>`;
-    });
-    html+=`</div>`;
-  }
-
-  if (priv.public===false) {
-    el.innerHTML='<div class="empty-state"><div class="ic ic-xl">🔒</div><div >Profil ini privat.</div></div>';
+  if (priv.public === false) {
+    el.innerHTML = '<div class="empty-state"><span class="ic ic-xl ic-lock" style="display:block;margin:0 auto 12px;opacity:.4;"></span><p>Profil ini privat.</p></div>';
     return;
   }
-  el.innerHTML=html;
-};
+
+  const heroes = Object.values(u.heroes || {});
+  const wins   = heroes.reduce((s, h) => s + (h.win  || 0), 0);
+  const losses = heroes.reduce((s, h) => s + (h.lose || 0), 0);
+  const total  = wins + losses;
+  const mmr    = priv.mmr  !== false ? u.mmr : null;
+  const daily  = u.daily || {};
+  const wl     = priv.wl  !== false;
+  const pubPhotoURL = fixImgBBUrl(p.photoURL || '');
+
+  let html = `
+    <div class="profile-hd">
+      <div class="profile-av">${pubPhotoURL ? `<img src="${pubPhotoURL}" style="width:100%;height:100%;object-fit:cover;">` : (p.username || '?')[0].toUpperCase()}</div>
+      <div class="profile-inf">
+        <div class="profile-uname">${escH(p.username || '—')}</div>
+        <div class="profile-id-row">
+          <div class="profile-id-badge">${escH(p.mlid || '—')}</div>
+          <div class="profile-id-lbl">ID Mobile Legends</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-stats-row" style="margin-bottom:20px">
+      <div class="pstat"><div class="pstat-val c-gold">${mmr !== null && mmr !== undefined ? mmr : '—'}</div><div class="pstat-lbl">MMR</div></div>
+      <div class="pstat"><div class="pstat-val c-green">${wl ? (daily.win || 0) : '<span class="ic ic-sm ic-lock" style="display:inline-block;opacity:.5;"></span>'}</div><div class="pstat-lbl">Win Hari Ini</div></div>
+      <div class="pstat"><div class="pstat-val c-red">${wl  ? (daily.lose || 0) : '<span class="ic ic-sm ic-lock" style="display:inline-block;opacity:.5;"></span>'}</div><div class="pstat-lbl">Lose Hari Ini</div></div>
+    </div>`;
+
+  if (priv.heroes !== false && heroes.length) {
+    html += `<div class="section-hd">Hero Stats <span class="cnt">${heroes.length} hero</span></div>
+    <div class="hero-grid" style="margin-bottom:20px">`;
+    Object.entries(u.heroes || {})
+      .sort((a, b) => {
+        if (b[1].main && !a[1].main) return 1;
+        if (a[1].main && !b[1].main) return -1;
+        return a[1].name.localeCompare(b[1].name);
+      })
+      .forEach(([id, h], i) => { html += buildHeroCardHTML(id, h, i); });
+    html += `</div>`;
+  }
+
+  if (priv.history !== false) {
+    const today = todayStr();
+    const histEntries = Object.entries(u.history || {})
+      .filter(([d, v]) => d !== today && v && v.win !== undefined && v.lose !== undefined)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 20);
+    html += `<div class="section-hd">History Harian <span class="cnt">${histEntries.length} entri</span></div>
+    <div class="hist-list">`;
+    if (!histEntries.length) {
+      html += `<div class="empty-state"><p>Belum ada history.</p></div>`;
+    } else {
+      histEntries.forEach(([d, v]) => {
+        const w2 = v.win || 0, l2 = v.lose || 0, t2 = w2 + l2;
+        const wr2 = t2 > 0 ? Math.round(w2 / t2 * 100) : 0;
+        const wrC2 = wr2 >= 60 ? 'var(--green)' : wr2 >= 50 ? 'var(--gold)' : 'var(--red)';
+        const cls2 = wr2 >= 60 ? 'good' : wr2 >= 50 ? 'ok' : 'bad';
+        const mmrE = v.mmr_end ?? null, mmrS = v.mmr_start ?? null;
+        const delta2 = (mmrE !== null && mmrS !== null) ? mmrE - mmrS : null;
+        const dCls2  = delta2 === null ? 'z' : delta2 > 0 ? 'p' : delta2 < 0 ? 'n' : 'z';
+        const dStr2  = delta2 === null ? '±?' : delta2 > 0 ? `+${delta2}` : delta2 === 0 ? '±0' : `${delta2}`;
+        html += `<div class="hist-row ${cls2}">
+          <div class="hist-date">${fmtDate(d)}</div>
+          <div class="hist-chips">
+            <span class="chip chip-w">W ${w2}</span>
+            <span class="chip chip-l">L ${l2}</span>
+            <span class="chip chip-g">${t2} games</span>
+          </div>
+          <div class="hist-wr" style="color:${wrC2}">${wr2}%</div>
+          <div class="hist-mmr-grp">
+            <div><div style="font-size:9px;color:var(--t3);font-family:var(--ff-display);letter-spacing:.5px;text-transform:uppercase;">MMR</div><div class="hist-mmr-val">${mmrE !== null ? mmrE : '—'}</div></div>
+            <span class="hist-delta ${dCls2}">${dStr2}</span>
+          </div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Legacy wrapper — dipanggil dari buildUserCard onclick (sudah di-override oleh routing)
 
 function buildHeroCardHTML(id,h,i) {
   const win=h.win||0,lose=h.lose||0,total=win+lose;
@@ -2926,67 +2992,272 @@ function renderOBSPreview() {
     </div>`;
 }
 
-// ═══ NAVIGATION ═══
+// ═══════════════════════════════════════════════════════
+// URL ROUTING SYSTEM
+// Routes:
+//   #home                → Home
+//   #explore             → Explore (kosong)
+//   #explore?q=username  → Explore + auto search
+//   #profile             → Profil sendiri
+//   #settings            → Settings
+//   #overlay             → OBS Overlay
+//   #user?uid=XXX        → Public profile by UID
+//   #user?u=username     → Public profile by username
+// ═══════════════════════════════════════════════════════
+
+// Parse hash URL → { page, params }
+function parseRoute() {
+  const raw = window.location.hash.slice(1) || 'home'; // hilangkan '#'
+  const [pagePart, queryPart] = raw.split('?');
+  const page = pagePart || 'home';
+  const params = {};
+  if (queryPart) {
+    queryPart.split('&').forEach(pair => {
+      const [k, v] = pair.split('=');
+      if (k) params[decodeURIComponent(k)] = decodeURIComponent(v || '');
+    });
+  }
+  return { page, params };
+}
+
+// Build hash URL string
+function buildRoute(page, params = {}) {
+  const q = Object.entries(params)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+  return '#' + page + (q ? '?' + q : '');
+}
+
+// Push route ke browser history (update URL tanpa reload)
+function pushRoute(page, params = {}) {
+  const url = buildRoute(page, params);
+  window.history.pushState({ page, params }, '', url);
+}
+
+// Replace route (tidak tambah history entry, misal saat init)
+function replaceRoute(page, params = {}) {
+  const url = buildRoute(page, params);
+  window.history.replaceState({ page, params }, '', url);
+}
+
+// ═══ INTERNAL show page (tanpa URL update) ═══
 window.showPage = (name) => {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const p=document.getElementById(`page-${name}`);
-  if(p) p.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById(`page-${name}`);
+  if (p) p.classList.add('active');
 
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===name));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === name));
 
-  const isAuthPage = ['auth','setup'].includes(name);
-  const fab = document.getElementById('fabBtn');
+  const isAuthPage = ['auth', 'setup'].includes(name);
+  const fab  = document.getElementById('fabBtn');
   const ubar = document.getElementById('updateBar');
   const bnav = document.getElementById('bottomNav');
-  if (fab) fab.style.display = isAuthPage ? 'none' : (currentUser ? 'flex' : 'none');
+  if (fab)  fab.style.display  = isAuthPage ? 'none' : (currentUser ? 'flex'  : 'none');
   if (ubar) ubar.style.display = isAuthPage ? 'none' : (currentUser ? 'block' : 'none');
   if (bnav) bnav.style.display = isAuthPage ? 'none' : (currentUser ? 'block' : 'none');
 };
 
-window.goPage = (name) => {
-  if (!currentUser && !['auth','setup'].includes(name)) { showPage('auth'); return; }
-  showPage(name);
-  if (name==='explore') {
-    document.getElementById('exploreSearch').value='';
-    document.getElementById('exploreResults').innerHTML='';
-    loadPublicUsers(document.getElementById('explorePublicList'));
+// ═══ NAVIGATE — update URL sekaligus tampilkan page ═══
+window.goPage = (name, params = {}) => {
+  if (!currentUser && !['auth', 'setup'].includes(name)) {
+    showPage('auth');
+    return;
   }
-  if (name==='profile') loadProfilePage();
-  if (name==='settings') loadSettings();
-  if (name==='overlay') renderOBSPreview();
-  window.scrollTo({top:0, behavior:'smooth'});
+  pushRoute(name, params);
+  _activatePage(name, params);
 };
 
-window.goBack = () => goPage('explore');
+// Internal: aktifkan page + side-effects (dipanggil dari goPage & popstate)
+function _activatePage(name, params = {}) {
+  showPage(name);
+
+  if (name === 'explore') {
+    const q = params.q || '';
+    const inp = document.getElementById('exploreSearch');
+    if (inp) inp.value = q;
+    document.getElementById('exploreResults').innerHTML = '';
+    if (q) {
+      // auto-trigger search dengan value dari URL
+      _doSearch(q);
+    } else {
+      loadPublicUsers(document.getElementById('explorePublicList'));
+    }
+  }
+
+  if (name === 'profile')  loadProfilePage();
+  if (name === 'settings') loadSettings();
+  if (name === 'overlay')  renderOBSPreview();
+
+  if (name === 'user') {
+    const uid = params.uid || '';
+    const uname = params.u || '';
+    if (uid) {
+      _showPublicProfileById(uid);
+    } else if (uname) {
+      _showPublicProfileByUsername(uname);
+    }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══ PUBLIC PROFILE helpers ═══
+async function _showPublicProfileById(uid) {
+  showPage('user');
+  const el = document.getElementById('publicProfileContent');
+  el.innerHTML = '<div class="empty-state"><p>Memuat profil...</p></div>';
+  const snap = await get(ref(db, `users/${uid}`));
+  if (!snap.exists()) {
+    el.innerHTML = '<div class="empty-state"><p>Profil tidak ditemukan.</p></div>';
+    return;
+  }
+  _renderPublicProfile(uid, snap.val());
+}
+
+async function _showPublicProfileByUsername(uname) {
+  showPage('user');
+  const el = document.getElementById('publicProfileContent');
+  el.innerHTML = '<div class="empty-state"><p>Memuat profil...</p></div>';
+  try {
+    const snap = await get(ref(db, `usernames/${uname.toLowerCase()}`));
+    if (!snap.exists()) {
+      el.innerHTML = '<div class="empty-state"><p>Pengguna tidak ditemukan.</p></div>';
+      return;
+    }
+    const uid = snap.val();
+    const uSnap = await get(ref(db, `users/${uid}`));
+    if (!uSnap.exists()) {
+      el.innerHTML = '<div class="empty-state"><p>Profil tidak ditemukan.</p></div>';
+      return;
+    }
+    _renderPublicProfile(uid, uSnap.val());
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p>Gagal memuat profil.</p></div>';
+  }
+}
+
+// ═══ SHARE PROFILE — copy URL ke clipboard ═══
+window.shareProfile = (uid, username) => {
+  const url = window.location.origin + window.location.pathname + buildRoute('user', { uid });
+  navigator.clipboard.writeText(url).then(() => showToast('Link profil disalin!', 'ok'));
+};
+
+// Override openPublicProfile agar update URL
+window.openPublicProfile = (uid, username) => {
+  goPage('user', { uid });
+};
+
+// ═══ EXPLORE SEARCH — update URL saat mengetik ═══
+let _searchRouteDebounce;
+window.searchUsers = () => {
+  const q = document.getElementById('exploreSearch').value.trim();
+  clearTimeout(_searchRouteDebounce);
+  _searchRouteDebounce = setTimeout(() => {
+    // Update URL tanpa push berulang (replace supaya tidak spam history)
+    replaceRoute('explore', q ? { q } : {});
+    _doSearch(q.toLowerCase());
+  }, 400);
+};
+
+async function _doSearch(q) {
+  const resEl  = document.getElementById('exploreResults');
+  const listEl = document.getElementById('explorePublicList');
+  if (!q) {
+    resEl.innerHTML = '';
+    loadPublicUsers(listEl);
+    return;
+  }
+  listEl.innerHTML = '';
+  resEl.innerHTML = '<div class="empty-state"><p>Mencari...</p></div>';
+  try {
+    const snap = await get(ref(db, `usernames/${q}`));
+    if (snap.exists()) {
+      const uid   = snap.val();
+      const uSnap = await get(ref(db, `users/${uid}/profile`));
+      if (uSnap.exists()) {
+        const p = uSnap.val();
+        if (p.privacy?.public !== false) {
+          resEl.innerHTML = '';
+          resEl.appendChild(buildUserCard(uid, p));
+          return;
+        }
+      }
+    }
+    resEl.innerHTML = '<div class="empty-state"><p>Pengguna tidak ditemukan.</p></div>';
+  } catch(e) {
+    resEl.innerHTML = '<div class="empty-state"><p>Error pencarian.</p></div>';
+  }
+}
+
+// ═══ BROWSER BACK/FORWARD ═══
+window.addEventListener('popstate', (e) => {
+  // Baca state dari history atau parse ulang dari URL
+  const { page, params } = e.state || parseRoute();
+  if (!currentUser && !['auth', 'setup'].includes(page)) {
+    showPage('auth');
+    return;
+  }
+  _activatePage(page, params);
+});
+
+// ═══ INIT ROUTE — baca URL saat pertama load ═══
+function initRoute() {
+  const { page, params } = parseRoute();
+  // Jika ada route spesifik di URL, navigasi ke sana
+  // (dipanggil dari initApp setelah user login)
+  const validPages = ['home', 'explore', 'profile', 'settings', 'overlay', 'user'];
+  if (validPages.includes(page)) {
+    replaceRoute(page, params); // update state tanpa push
+    _activatePage(page, params);
+  } else {
+    replaceRoute('home');
+    _activatePage('home');
+  }
+}
+
+// ═══ GOBACK — kembali ke explore atau prev history ═══
+window.goBack = () => {
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    goPage('explore');
+  }
+};
 
 window.toggleDrop = () => { document.getElementById('avatarDrop').classList.toggle('open'); };
 document.addEventListener('click', e => {
-  const d=document.getElementById('avatarDrop');
-  if(d&&!d.contains(e.target)) d.classList.remove('open');
+  const d = document.getElementById('avatarDrop');
+  if (d && !d.contains(e.target)) d.classList.remove('open');
 });
 
-window.setSnav = (el,panel) => {
-  document.querySelectorAll('.snav-item').forEach(i=>i.classList.remove('on'));
+window.setSnav = (el, panel) => {
+  document.querySelectorAll('.snav-item').forEach(i => i.classList.remove('on'));
   el.classList.add('on');
-  ['sprof','sprivacy','sobs','saccount'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
-  const target=document.getElementById(panel);
-  if(target) target.style.display='block';
+  ['sprof','sprivacy','sobs','saccount'].forEach(id => {
+    const e = document.getElementById(id);
+    if (e) e.style.display = 'none';
+  });
+  const target = document.getElementById(panel);
+  if (target) target.style.display = 'block';
 };
 
-window.setPTab = (btn,panel) => {
-  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('.ptab-panel').forEach(p=>p.classList.remove('on'));
+window.setPTab = (btn, panel) => {
+  document.querySelectorAll('.ptab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.ptab-panel').forEach(p => p.classList.remove('on'));
   btn.classList.add('on');
-  const p=document.getElementById(panel); if(p) p.classList.add('on');
+  const p = document.getElementById(panel);
+  if (p) p.classList.add('on');
 };
 
-window.openModal = (id) => document.getElementById(id)?.classList.add('on');
+window.openModal  = (id) => document.getElementById(id)?.classList.add('on');
 window.closeModal = (id) => document.getElementById(id)?.classList.remove('on');
-document.querySelectorAll('.modal-overlay').forEach(m=>{
-  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('on'); });
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('on'); });
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.on').forEach(m=>m.classList.remove('on')); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.on').forEach(m => m.classList.remove('on'));
+});
 
 function showSetupPage() {
   document.getElementById('updateBar').style.display = 'none';
