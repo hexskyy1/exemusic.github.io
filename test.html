@@ -2,55 +2,128 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YT to MP3/MP4 by Hengki</title>
   <style>
     body {
-      font-family: Arial;
-      background: #0f172a;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f172a, #020617);
       color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      width: 380px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
       text-align: center;
-      padding-top: 100px;
     }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
     input {
-      padding: 10px;
-      width: 300px;
-      border-radius: 8px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
       border: none;
+      margin-bottom: 20px;
+      outline: none;
     }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+    }
+
     button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
+      flex: 1;
+      padding: 12px;
       border: none;
+      border-radius: 10px;
+      font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
     }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
     .mp3 { background: #22c55e; }
     .mp4 { background: #3b82f6; }
+
+    #status {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
 
-  <h2>YT to MP3/MP4<br>by Hengki</h2>
+  <div class="card">
+    <h1>YT to MP3/MP4<br>by Hengki</h1>
 
-  <input type="text" id="url" placeholder="Masukkan link YouTube...">
-  <br>
+    <input type="text" id="url" placeholder="Paste link YouTube di sini...">
 
-  <button class="mp3" onclick="goMP3()">MP3</button>
-  <button class="mp4" onclick="goMP4()">MP4</button>
+    <div class="buttons">
+      <button class="mp3" onclick="downloadMP3()">MP3</button>
+      <button class="mp4" onclick="downloadMP4()">MP4</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="footer">Simple • No Spam • Fast</div>
+  </div>
 
   <script>
-    function goMP3() {
-      const url = document.getElementById('url').value;
-      if (!url) return alert("Masukkan link dulu!");
-
-      window.open("https://www.y2mate.is/en/youtube-mp3?url=" + encodeURIComponent(url), "_blank");
+    function isValid(url) {
+      return url.includes("youtube.com") || url.includes("youtu.be");
     }
 
-    function goMP4() {
+    function downloadMP3() {
       const url = document.getElementById('url').value;
-      if (!url) return alert("Masukkan link dulu!");
+      const status = document.getElementById('status');
 
-      window.open("https://en.savefrom.net/1-youtube-video-downloader/?url=" + encodeURIComponent(url), "_blank");
+      if (!url || !isValid(url)) {
+        status.innerHTML = "Link tidak valid ❌";
+        return;
+      }
+
+      status.innerHTML = "Membuka converter... ⏳";
+
+      // fallback stabil
+      window.open("https://snapsave.io/download?url=" + encodeURIComponent(url), "_blank");
+    }
+
+    function downloadMP4() {
+      const url = document.getElementById('url').value;
+      const status = document.getElementById('status');
+
+      if (!url || !isValid(url)) {
+        status.innerHTML = "Link tidak valid ❌";
+        return;
+      }
+
+      status.innerHTML = "Membuka converter... ⏳";
+
+      window.open("https://snapsave.io/download?url=" + encodeURIComponent(url), "_blank");
     }
   </script>
 
