@@ -86,20 +86,26 @@
 <script>
     // Logika Pemrograman (JavaScript)
     function convertVideo() {
-        const url = document.getElementById('videoUrl').value;
+        let url = document.getElementById('videoUrl').value;
         const resultDiv = document.getElementById('result');
-
+    
         if (url === "") {
-            alert("Tolong masukkan link YouTube dulu ya, Hexky!");
+            alert("Masukkan link YouTube dulu, Hexky!");
             return;
         }
-
-        // Kita menggunakan API dari vevioz untuk konversi.
-        // Caranya: Kita memasukkan URL user ke dalam iframe milik mereka.
+    
+        // Penjelasan untuk Hexky:
+        // Baris di bawah ini gunanya untuk mengambil ID video saja 
+        // dan membuang sampah link seperti &list= atau &index=
+        if (url.includes("watch?v=")) {
+            url = url.split('&')[0]; 
+        }
+    
         resultDiv.innerHTML = `
-            <p style="font-size: 12px; color: #aaa;">Menyiapkan link download...</p>
+            <p style="font-size: 12px; color: #aaa;">Menghubungkan ke server konversi...</p>
             <iframe src="https://api.vevioz.com/apis/button/mp3?url=${url}" 
-                    scrolling="no">
+                    scrolling="no" 
+                    style="border:none; width:100%; height:60px;">
             </iframe>
         `;
     }
