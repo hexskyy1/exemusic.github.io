@@ -633,13 +633,34 @@
       loaderText.textContent = 'MENGHUBUNGI SERVER...';
       setProgress(10);
 
-      const apiUrl = `https://www.yt2mp3converter.net/apis/fetch.php?url=${encodeURIComponent(url)}&format=${selectedFormat}`;
+      const targetUrl = `https://www.yt2mp3converter.net/apis/fetch.php?url=${encodeURIComponent(url)}&format=${selectedFormat}`;
+
+      // CORS proxies - dicoba satu per satu
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://cors-anywhere.herokuapp.com/${targetUrl}`,
+      ];
 
       try {
         loaderText.textContent = 'MENGAMBIL DATA...';
         setProgress(30);
 
-        const resp = await fetch(apiUrl);
+        let resp = null;
+        let lastErr = null;
+
+        for (let i = 0; i < proxies.length; i++) {
+          loaderText.textContent = `MENCOBA PROXY ${i + 1}/${proxies.length}...`;
+          try {
+            resp = await fetch(proxies[i], { headers: { 'x-requested-with': 'XMLHttpRequest' } });
+            if (resp.ok) break;
+          } catch (e) {
+            lastErr = e;
+            resp = null;
+          }
+        }
+
+        if (!resp || !resp.ok) throw new Error(lastErr?.message || 'Semua proxy gagal. Coba lagi nanti.');
 
         setProgress(60);
         loaderText.textContent = 'MEMPROSES RESPONS...';
