@@ -10768,6 +10768,24 @@
       if (!t || t === 'Ketik ID lagu dulu') { showToast('Isi ID dulu'); return; }
       navigator.clipboard.writeText(t).then(() => showToast('URL disalin!')); document.getElementById('modalAdminCopyUrl').style.display = 'none';
     }
+    const params = new URLSearchParams(window.location.search);
+
+const id = params.get("id");
+const autoplay = params.get("autoplay");
+
+if (id) {
+  playSongById(id);
+
+  if (autoplay === "true") {
+    const audio = document.querySelector("audio");
+    if (audio) {
+      audio.muted = true;
+      audio.play().then(() => {
+        audio.muted = false;
+      });
+    }
+  }
+}
   </script>
 </body>
 </html>
