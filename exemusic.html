@@ -1962,8 +1962,10 @@
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 18px;
       border: 1px solid rgba(255,255,255,0.04);
-      overflow: hidden; position: relative; z-index: 10;
+      overflow: visible; position: relative; z-index: 10;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 30px rgba(0,0,0,0.3);
+      padding: 15px;
+      box-sizing: border-box;
     }
     .cover-box::before {
       content: '';
@@ -1971,15 +1973,27 @@
       background: repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(0,255,136,0.01) 30px, rgba(0,255,136,0.01) 31px),
                   repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(0,255,136,0.01) 30px, rgba(0,255,136,0.01) 31px);
     }
-    .eq { display: flex; align-items: flex-end; gap: 5px; height: 60px; position: relative; z-index: 15; }
-    .eq span { width: 6px; background: linear-gradient(to top, var(--accent), var(--accent2)); border-radius: 10px; height: 10px; transition: height 0.2s ease; box-shadow: 0 0 10px var(--accent); }
+    .eq { display: flex; align-items: flex-end; gap: 5px; height: 60px; position: relative; z-index: 15; padding: 5px; box-sizing: border-box; }
+    .eq span { width: 6px; min-width: 4px; background: linear-gradient(to top, var(--accent), var(--accent2)); border-radius: 10px; height: 10px; transition: height 0.2s ease; box-shadow: 0 0 10px var(--accent); flex-shrink: 0; }
     .playing span { animation: wave 0.8s infinite ease-in-out; }
     .playing span:nth-child(1) { animation-delay: 0.1s; }
     .playing span:nth-child(2) { animation-delay: 0.3s; }
     .playing span:nth-child(3) { animation-delay: 0.2s; }
     .playing span:nth-child(4) { animation-delay: 0.4s; }
     .playing span:nth-child(5) { animation-delay: 0.15s; }
-    @keyframes wave { 0%, 100% { height: 10px; } 50% { height: 50px; } }
+    @keyframes wave { 0%, 100% { height: 10px; } 50% { height: 45px; } }
+
+    /* Responsive EQ */
+    @media (max-width: 480px) {
+      .eq { height: 50px; gap: 4px; padding: 4px; }
+      .eq span { width: 5px; min-width: 3px; }
+      @keyframes wave { 0%, 100% { height: 8px; } 50% { height: 38px; } }
+    }
+    @media (max-width: 360px) {
+      .eq { height: 45px; gap: 3px; padding: 3px; }
+      .eq span { width: 4px; min-width: 2px; }
+      @keyframes wave { 0%, 100% { height: 6px; } 50% { height: 32px; } }
+    }
 
     /* ============================================================
        TRACK INFO
