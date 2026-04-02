@@ -2006,6 +2006,10 @@
     .sys-tools { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 0 6px; }
     .sys-tools button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 17px; opacity: 0.7; transition: 0.2s; padding: 4px; }
     .sys-tools button:hover { opacity: 1; transform: translateY(-2px); color: var(--accent); }
+    .download-progress { min-height: 42px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+    .download-progress-bar { width: 100%; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
+    .download-progress-bar #downloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.2s ease; }
+    .download-progress-text { font-size: 11px; color: #fff; text-align: center; letter-spacing: 0.4px; font-family: 'JetBrains Mono', monospace; }
     .vol-row { display: flex; align-items: center; gap: 10px; padding: 0 5px; }
     #vol { flex: 1; height: 4px; accent-color: var(--accent); cursor: pointer; border-radius: 2px; }
 
@@ -5123,6 +5127,12 @@
         <button onclick="downloadSong()" title="Download"><i class="fas fa-download"></i></button>
         <button onclick="openReq()" title="Upload"><i class="fas fa-plus-circle"></i></button>
       </div>
+      <div class="download-progress" id="downloadProgress" style="display:none;">
+        <div class="download-progress-bar">
+          <div id="downloadProgressFill"></div>
+        </div>
+        <div class="download-progress-text" id="downloadProgressText">0%</div>
+      </div>
       <div class="vol-row">
         <i class="fas fa-volume-down" style="font-size:12px; color:#555"></i>
         <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8">
@@ -5825,7 +5835,7 @@
   </div>
 
   <!-- LEADERBOARD MODAL -->
-  <div class="modal" id="modalLeaderboard" onclick="if(event.target==this)this.style.display='none'">
+  <div class="modal" id="modalLeaderboard" onclick="if(event.target==this)closeLeaderboard()">
     <div class="leaderboard-sheet">
       <div class="leaderboard-header">
         <div class="leaderboard-title">
@@ -6598,6 +6608,33 @@
     let leaderboardRefreshInterval = null;
     let leaderboardRefreshCountdown = 60;
 
+    let lastNonLeaderboardUrl = null;
+
+    function setLeaderboardUrl(category) {
+      const base = window.location.protocol + '//' + window.location.host + window.location.pathname;
+      const leaderboardUrl = base + '?leaderboard#' + category;
+      window.history.pushState({ path: leaderboardUrl }, '', leaderboardUrl);
+    }
+
+    function restoreUrlAfterLeaderboard() {
+      if (lastNonLeaderboardUrl) {
+        window.history.pushState({ path: lastNonLeaderboardUrl }, '', lastNonLeaderboardUrl);
+      } else {
+        applyProfileUrl(true); // default fallback
+      }
+      lastNonLeaderboardUrl = null;
+    }
+
+    function closeLeaderboard() {
+      const lbModal = document.getElementById('modalLeaderboard');
+      if (lbModal) lbModal.style.display = 'none';
+      restoreUrlAfterLeaderboard();
+      if (leaderboardRefreshInterval) {
+        clearInterval(leaderboardRefreshInterval);
+        leaderboardRefreshInterval = null;
+      }
+    }
+
     function openLeaderboard(defaultCategory = 'followers') {
       const eventModal = document.getElementById('modalEventCenter');
       const lbModal = document.getElementById('modalLeaderboard');
@@ -6606,13 +6643,18 @@
         msg('Login dulu untuk akses leaderboard');
         return;
       }
+
+      // store URL before leaderboard
+      if (!lastNonLeaderboardUrl) {
+        lastNonLeaderboardUrl = window.location.href;
+      }
       
       // Close event center, open leaderboard
       if (eventModal) eventModal.style.display = 'none';
       if (lbModal) lbModal.style.display = 'block';
-      
-      // Set hash for refresh
-      window.location.hash = `#leaderboard#${defaultCategory}`;
+
+      // Set leaderboard URL
+      setLeaderboardUrl(defaultCategory);
       
       // Load leaderboard data
       loadLeaderboardData();
@@ -7263,6 +7305,9 @@
     }
     function applyProfileUrl(push = false) {
       try {
+        // If currently in leaderboard mode, do not override URL
+        if (window.location.search.startsWith('?leaderboard')) return;
+
         const base = window.location.protocol + '//' + window.location.host + window.location.pathname;
         let newUrl;
         if (currentProfileUid) newUrl = base + '?profile_userid=' + encodeURIComponent(currentProfileUid);
@@ -9264,7 +9309,72 @@
     }
     function copyRawUrl() { document.getElementById('copyAudioText').textContent = songs[i]?.url || ''; document.getElementById('modalCopyAudio').style.display = 'block'; }
     function copyBuiltAudio() { const t = document.getElementById('copyAudioText').textContent; if (!t) return; navigator.clipboard.writeText(t).then(() => showToast('URL audio disalin')); document.getElementById('modalCopyAudio').style.display = 'none'; }
-    function downloadSong() { window.open(songs[i].url); }
+    async function downloadSong() {
+      const url = songs[i]?.url;
+      if (!url) { msg('URL lagu tidak tersedia'); return; }
+
+      const progressEl = document.getElementById('downloadProgress');
+      const fillEl = document.getElementById('downloadProgressFill');
+      const textEl = document.getElementById('downloadProgressText');
+      if (progressEl && fillEl && textEl) {
+        progressEl.style.display = 'flex';
+        fillEl.style.width = '0%';
+        textEl.textContent = 'Mulai download...';
+      }
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const contentLength = response.headers.get('content-length');
+        const totalBytes = contentLength ? parseInt(contentLength, 10) : null;
+        const reader = response.body.getReader();
+        const chunks = [];
+        let receivedLength = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          receivedLength += value.length;
+          let percent = totalBytes ? Math.round((receivedLength / totalBytes) * 100) : null;
+          if (progressEl && fillEl && textEl) {
+            if (percent !== null) {
+              fillEl.style.width = percent + '%';
+              textEl.textContent = `Downloading ${percent}%`;
+            } else {
+              textEl.textContent = `Downloading ${Math.round(receivedLength / 1024)} KB`; 
+            }
+          }
+        }
+
+        const blob = new Blob(chunks, { type: 'audio/mpeg' });
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+
+        const cleanTitle = (songs[i]?.title || 'download').replace(/[\\/:*?"<>|]/g, '_');
+        a.download = cleanTitle + '.mp3';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+
+        if (progressEl && fillEl && textEl) {
+          fillEl.style.width = '100%';
+          textEl.textContent = 'Selesai!';
+        }
+        showToast('Download berhasil, check folder unduhan Anda.');
+      } catch (error) {
+        console.error('Download error:', error);
+        msg('Gagal download: ' + (error.message || 'Coba lagi')); 
+        if (textEl) textEl.textContent = 'Download gagal';
+      } finally {
+        setTimeout(() => {
+          if (progressEl) progressEl.style.display = 'none';
+        }, 2500);
+      }
+    }
     function openReq() { document.getElementById('modalReq').style.display = 'block'; }
     function openAbout() { document.getElementById('modalAbout').style.display = 'block'; }
     function openBoomboxTutorial() { document.getElementById('modalBoombox').style.display = 'block'; }
