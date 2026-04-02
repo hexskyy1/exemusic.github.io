@@ -14,7 +14,6 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6304042271148186" crossorigin="anonymous"></script>
@@ -6277,42 +6276,32 @@
       appId: "1:722057744401:web:cd6a6a103692059bda61b0",
       measurementId: "G-2P56Y7QQ18"
     };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-    const storage = firebase.storage();
+    // Initialize Firebase after DOM is ready
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Initializing Firebase...');
+      firebase.initializeApp(firebaseConfig);
+      console.log('✅ Firebase initialized successfully');
+      const auth = firebase.auth();
+      const db = firebase.database();
+      const storage = firebase.storage();
+        console.log('✅ Firebase services initialized');
 
-    // ============================================================
-    // FIREBASE APP CHECK - Security Enhancement
-    // ============================================================
-    // App Check helps protect Firebase resources from abuse by ensuring
-    // that requests come from legitimate apps. It uses reCAPTCHA v3 to
-    // verify that requests are coming from real users and not bots.
-    // This adds an extra layer of security to database and storage operations.
-    // ============================================================
-    try {
-      const appCheck = firebase.appCheck();
-      appCheck.activate(
-        new firebase.appCheck.ReCaptchaV3Provider('6LcH7KIsAAAAAMzHThJ6DX3kXlKssbOsKMDQcXxb'),
-        true // Set to true for debug mode during development
-      );
-      console.log('🔒 Firebase App Check activated successfully with reCAPTCHA v3');
-
-      // Test App Check token generation
-      appCheck.getToken().then(token => {
-        if (token && token.token) {
-          console.log('✅ App Check token generated successfully');
-        } else {
-          console.warn('⚠️ App Check token generation returned empty token');
-        }
-      }).catch(error => {
-        console.warn('⚠️ App Check token generation failed:', error);
-      });
-
-    } catch (error) {
-      console.error('❌ Failed to initialize Firebase App Check:', error);
-      showToast('App Check initialization failed - some security features may not work', 'warning');
-    }
+      // ============================================================
+      // FIREBASE APP CHECK - Security Enhancement
+      // ============================================================
+      try {
+        console.log('🔒 Initializing Firebase App Check...');
+        const appCheck = firebase.appCheck();
+        appCheck.activate(
+          new firebase.appCheck.ReCaptchaV3Provider('6LcH7KIsAAAAAMzHThJ6DX3kXlKssbOsKMDQcXxb'),
+          true // Set to true for debug mode during development
+        );
+        console.log('🔒 Firebase App Check activated successfully with reCAPTCHA v3');
+      } catch (error) {
+        console.error('❌ Failed to initialize Firebase App Check:', error);
+        console.warn('⚠️ Continuing without App Check - some security features may not work');
+        showToast('App Check initialization failed - some security features may not work', 'warning');
+      }
 
     // Function to verify App Check status
     function checkAppCheckStatus() {
@@ -6373,13 +6362,16 @@
       next();
     }
     function dismissLoader() {
+      console.log('✅ Dismissing loader...');
       advanceLoader(100, 'READY!');
       setTimeout(() => {
         const screen = document.getElementById('gameLoadScreen');
         if (screen) {
+          console.log('🎬 Fading out loading screen...');
           screen.classList.add('fade-out');
-          setTimeout(() => { 
+          setTimeout(() => {
             screen.style.display = 'none';
+            console.log('✨ Loading screen hidden, showing welcome animation...');
             // Show welcome animation after loading completes
             showWelcomeAnimation();
           }, 800);
@@ -6388,12 +6380,40 @@
     }
     runLoadSequence();
 
-    let heartsInterval = null;
-    let heartsMode = 'love';
-    let ketupatInterval = null;
-    let profileMusicInterval = null;
-    let profileMusicDuration = 0;
-    let profileMusicElapsed = 0;
+    // Safety timeout - force dismiss loader after 15 seconds if Firebase fails
+    setTimeout(() => {
+      const screen = document.getElementById('gameLoadScreen');
+      if (screen && screen.style.display !== 'none') {
+        console.warn('⚠️ Loading timeout reached - forcing loader dismissal');
+        dismissLoader();
+      }
+    }, 15000);
+
+    // Additional safety - force dismiss after 8 seconds regardless
+    setTimeout(() => {
+      const screen = document.getElementById('gameLoadScreen');
+      if (screen && screen.style.display !== 'none') {
+        console.warn('🚨 Emergency loading timeout - forcing dismissal');
+        advanceLoader(100, 'READY!');
+        screen.classList.add('fade-out');
+        setTimeout(() => {
+          screen.style.display = 'none';
+          showWelcomeAnimation();
+        }, 500);
+      }
+    }, 8000);
+
+    // Global error handler for debugging
+    window.addEventListener('error', function(e) {
+      console.error('🚨 Global error caught:', e.error);
+      console.error('🚨 Error message:', e.message);
+      console.error('🚨 Error file:', e.filename);
+      console.error('🚨 Error line:', e.lineno);
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('🚨 Unhandled promise rejection:', e.reason);
+    });
     
     function createHeart() {
       const c = document.getElementById('heartsContainer');
@@ -8582,11 +8602,13 @@
     setupGlobalNotifsWatcher();
     setupAdminFloatChatWatcher();
 
-    // ============================================================
-    // AUTH
-    // ============================================================
-    auth.onAuthStateChanged(u => {
-      if (u) {
+      // ============================================================
+      // AUTH
+      // ============================================================
+      console.log('🔄 Setting up auth state listener...');
+      auth.onAuthStateChanged(u => {
+        console.log('🔄 Auth state changed:', u ? 'User logged in' : 'No user');
+        if (u) {
         db.ref('users/' + u.uid).on('value', snap => {
           userData = snap.val();
           if (!userData) { dismissLoader(); return; }
@@ -8705,7 +8727,7 @@
       }
     });
 
-    // ============================================================
+    }); // End of DOMContentLoaded
     // VIP TRIAL BANNER
     // ============================================================
     function updateVipTrialBanner(expireAt) {
