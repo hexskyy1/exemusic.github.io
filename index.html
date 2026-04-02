@@ -2375,6 +2375,33 @@
     .mp-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; justify-content: center; }
     .mp-name { font-size: 20px; font-weight: 800; color: #fff; font-family: 'Rajdhani', sans-serif; letter-spacing: 0.5px; }
     .mp-handle { font-size: 11px; color: #888; margin-bottom: 12px; letter-spacing: 0.3px; }
+    .mp-ranking-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,152,0,0.1));
+      border: 1px solid rgba(255,193,7,0.3);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fbbf24;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .mp-ranking-badge:hover {
+      background: linear-gradient(135deg, rgba(255,193,7,0.25), rgba(255,152,0,0.2));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255,193,7,0.2);
+    }
+    .mp-ranking-badge.rank-1 { background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,193,7,0.15)); border-color: rgba(255,215,0,0.4); color: #ffd700; }
+    .mp-ranking-badge.rank-2 { background: linear-gradient(135deg, rgba(192,192,192,0.2), rgba(169,169,169,0.15)); border-color: rgba(192,192,192,0.4); color: #c0c0c0; }
+    .mp-ranking-badge.rank-3 { background: linear-gradient(135deg, rgba(205,127,50,0.2), rgba(184,134,11,0.15)); border-color: rgba(205,127,50,0.4); color: #cd7f32; }
+    .mp-ranking-badge.rank-4 { background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,212,255,0.1)); border-color: rgba(0,255,136,0.3); color: #00ff88; }
+    .mp-ranking-badge.rank-5 { background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(0,255,136,0.1)); border-color: rgba(0,212,255,0.3); color: #00d4ff; }
+    .mp-ranking-icon { font-size: 12px; }
+    .mp-ranking-text { font-family: 'Rajdhani', sans-serif; }
     .mp-stats {
       display: flex; gap: 0; margin-bottom: 18px;
       background: rgba(255,255,255,0.03);
@@ -6618,6 +6645,9 @@
       if (eventModal) eventModal.style.display = 'none';
       if (lbModal) lbModal.style.display = 'block';
       
+      // Set hash for refresh
+      window.location.hash = '#leaderboard';
+      
       // Load leaderboard data
       loadLeaderboardData();
       
@@ -6861,6 +6891,7 @@
             <span class="mp-ranking-icon">🔥</span>
             <span class="mp-ranking-text">#${bestRank} ${categoryLabels[bestCategory]}</span>
           `;
+          badge.onclick = () => openLeaderboard();
           profHeader.appendChild(badge);
         }
       } catch (err) {
@@ -9127,6 +9158,7 @@
       else stopProfileMusic();
       document.getElementById('modalProfile').style.display = 'block';
       applyProfileUrl(true);
+      updateProfileRankingBadge(auth.currentUser.uid);
     }
     function switchProfileTab(tab) {
       document.querySelectorAll('.mp-tab').forEach(t => t.classList.remove('active'));
