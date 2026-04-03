@@ -5510,9 +5510,11 @@
       <div class="mp-tabs">
         <div class="mp-tab active" onclick="switchProfileTab('posts')" id="tabPosts"><i class="fas fa-music" style="margin-right:4px"></i> MY UPLOADS</div>
         <div class="mp-tab" onclick="switchProfileTab('likes')" id="tabLikes"><i class="fas fa-heart" style="margin-right:4px"></i> FAVORITES</div>
+        <div class="mp-tab" onclick="switchProfileTab('blacklist')" id="tabBlacklist"><i class="fas fa-ban" style="margin-right:4px"></i> BLACKLIST</div>
       </div>
       <div id="myPostList" class="mp-list"></div>
       <div id="myLikeList" class="mp-list" style="display:none"></div>
+      <div id="myBlacklist" class="mp-list" style="display:none"></div>
     </div>
   </div>
 
@@ -5620,6 +5622,7 @@
           <li><b>Smart Social System</b> – Follow creator favorit & bangun komunitas</li>
           <li><b>VIP Trial System</b> – Nikmati VIP sementara dengan cooldown 15 menit</li>
           <li><b>Badge System</b> – Verifikasi otomatis di 50+ followers</li>
+          <li><b>Blacklist System</b> – Blokir lagu yang tidak ingin didengar lagi</li>
           <li><b>Built-in Admin Panel</b> – Kelola platform langsung dari aplikasi</li>
           <li><b>Real-time Sync</b> – Followers, likes, playlist real-time</li>
         </ul>
@@ -5629,8 +5632,7 @@
         </div>
         <p style="margin-top:12px; color:#ddd">
           📱 WhatsApp — <a href="https://wa.me/62895329018240" target="_blank" class="about-dev-link">click here</a><br>
-          📋 Changelogs — <a href="https://execuriverp.github.io/changelogs" target="_blank" class="about-dev-link">click here</a><br>
-          📻 Use Boombox — <a href="javascript:void(0)" onclick="openBoomboxTutorial()" class="about-dev-link">click here</a>
+           Use Boombox — <a href="javascript:void(0)" onclick="openBoomboxTutorial()" class="about-dev-link">click here</a>
         </p>
         <p style="font-size:11px; color:#555; margin-top:10px">Dibuat oleh <a href="?profile_userid=GsU6ThLD9gb5P3k8RS87ro553Ks2" class="about-dev-link">Hexky</a><br>© 2025 ExeMusic</p>
         <button onclick="closeModal()" class="btn-act">SAYA MENGERTI</button>
@@ -9191,8 +9193,35 @@
       document.querySelectorAll('.mp-tab').forEach(t => t.classList.remove('active'));
       document.getElementById('myPostList').style.display = 'none';
       document.getElementById('myLikeList').style.display = 'none';
+      document.getElementById('myBlacklist').style.display = 'none';
       if (tab === 'posts') { document.getElementById('tabPosts').classList.add('active'); document.getElementById('myPostList').style.display = 'flex'; }
-      else { document.getElementById('tabLikes').classList.add('active'); document.getElementById('myLikeList').style.display = 'flex'; }
+      else if (tab === 'likes') { document.getElementById('tabLikes').classList.add('active'); document.getElementById('myLikeList').style.display = 'flex'; }
+      else if (tab === 'blacklist') { document.getElementById('tabBlacklist').classList.add('active'); document.getElementById('myBlacklist').style.display = 'flex'; renderBlacklist(); }
+    }
+    function renderBlacklist() {
+      if (!userData || !userData.blacklist) {
+        document.getElementById('myBlacklist').innerHTML = '<div style="text-align:center; padding:20px; color:#666">Belum ada lagu di blacklist</div>';
+        return;
+      }
+      const blacklistedSongs = songs.filter(s => userData.blacklist.includes(s.key));
+      document.getElementById('myBlacklist').innerHTML = blacklistedSongs.map(s =>
+        `<div class="mp-song-item">
+          <div class="mp-song-icon" style="color:#ff3333"><i class="fas fa-ban"></i></div>
+          <div class="mp-song-info">
+            <div class="mp-song-title">${escapeHtml(s.title)}</div>
+            <div class="mp-song-artist">@${escapeHtml(s.by)}</div>
+          </div>
+          <button class="mp-btn mp-btn-sec" style="font-size:10px; padding:4px 8px;" onclick="unblacklistSong('${s.key}')"><i class="fas fa-check"></i> Unblacklist</button>
+        </div>`
+      ).join('');
+    }
+    async function unblacklistSong(songKey) {
+      if (!userData.blacklist) return;
+      userData.blacklist = userData.blacklist.filter(id => id !== songKey);
+      await db.ref('users/' + auth.currentUser.uid).update({ blacklist: userData.blacklist });
+      renderBlacklist();
+      updateBlacklistUI();
+      showToast('Lagu di-unblacklist');
     }
 
     async function viewCreator() {
