@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ExeMusic Pro</title>
+<title>ExeMusic v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -670,7 +670,7 @@ import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signInW
       measurementId: "G-2P56Y7QQ18"
     };
 
-const APP=initializeApp(FC);
+const APP=initializeApp(firebaseConfig);
 const DB=getDatabase(APP);
 const AUTH=getAuth(APP);
 const GPROV=new GoogleAuthProvider();
