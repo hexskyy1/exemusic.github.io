@@ -2053,14 +2053,31 @@
     .sys-tools button { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 17px; opacity: 0.7; transition: 0.2s; padding: 4px; }
     .sys-tools button:hover { opacity: 1; transform: translateY(-2px); color: var(--accent); }
     .download-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 18px;
       padding: 16px;
       display: none;
       flex-direction: column;
       gap: 14px;
       margin-bottom: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    .download-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 18px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      pointer-events: none;
     }
     .download-card-header { display: flex; justify-content: space-between; align-items: center; }
     .download-card-header h4 { margin: 0; color: var(--accent); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; }
@@ -2072,7 +2089,12 @@
     .download-card-message.error { color: #ff8c8c; }
     .download-card-progress { display: flex; flex-direction: column; gap: 8px; }
     .download-card-progress-bar { width: 100%; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
-    .download-card-progress-bar #downloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.2s ease; }
+    .download-card-progress-bar #downloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s ease; box-shadow: 0 0 10px rgba(0,255,136,0.4); }
+    .download-card-progress-bar #downloadProgressFill.downloading { animation: progressPulse 2s ease-in-out infinite; }
+    @keyframes progressPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(0,255,136,0.4); }
+      50% { box-shadow: 0 0 20px rgba(0,255,136,0.8), 0 0 30px rgba(0,212,255,0.3); }
+    }
     .download-card-progress-text { font-size: 12px; text-align: right; color: #fff; letter-spacing: 0.4px; font-family: 'JetBrains Mono', monospace; }
     .download-card-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .download-card-btn { flex: 1; min-width: 110px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.06); color: #fff; border-radius: 999px; padding: 10px 14px; cursor: pointer; transition: 0.2s; font-size: 12px; }
@@ -9586,7 +9608,7 @@
       return value.toFixed(1) + ' ' + units[index];
     }
 
-    function updateDownloadCard({ detail, size, filename, message, messageType, progressText, progressPercent, showGoto, showToggle, showProgress }) {
+    function updateDownloadCard({ detail, size, filename, message, messageType, progressText, progressPercent, showGoto, showToggle, showProgress, isDownloading = false }) {
       const card = document.getElementById('downloadCard');
       const detailLabel = document.getElementById('downloadDetailLabel');
       const sizeLabel = document.getElementById('downloadSize');
@@ -9608,6 +9630,13 @@
       }
       if (progressSection) progressSection.style.display = showProgress ? 'flex' : 'none';
       if (fillEl && typeof progressPercent === 'number') fillEl.style.width = `${progressPercent}%`;
+      if (fillEl) {
+        if (isDownloading) {
+          fillEl.classList.add('downloading');
+        } else {
+          fillEl.classList.remove('downloading');
+        }
+      }
       if (textEl) textEl.textContent = progressText || '';
       if (toggleBtn) toggleBtn.style.display = showToggle ? 'inline-flex' : 'none';
       if (gotoBtn) gotoBtn.style.display = showGoto ? 'inline-flex' : 'none';
@@ -9632,7 +9661,7 @@
       const toggleBtn = document.getElementById('downloadToggleBtn');
       if (toggleBtn) toggleBtn.textContent = 'Pause';
       if (hide) {
-        updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true });
+        updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
         hideDownloadCard(2200);
       }
     }
@@ -9642,7 +9671,7 @@
       downloadPaused = !downloadPaused;
       const toggleBtn = document.getElementById('downloadToggleBtn');
       if (toggleBtn) toggleBtn.textContent = downloadPaused ? 'Resume' : 'Pause';
-      updateDownloadCard({ message: downloadPaused ? 'Download dijeda' : 'Melanjutkan download...', messageType: 'info', progressText: document.getElementById('downloadProgressText')?.textContent, progressPercent: null, showToggle: true, showProgress: true });
+      updateDownloadCard({ message: downloadPaused ? 'Download dijeda' : 'Melanjutkan download...', messageType: 'info', progressText: document.getElementById('downloadProgressText')?.textContent, progressPercent: null, showToggle: true, showProgress: true, isDownloading: !downloadPaused });
       if (!downloadPaused && downloadPauseResolver) {
         downloadPauseResolver();
         downloadPauseResolver = null;
@@ -9735,6 +9764,7 @@
             messageType: 'info',
             progressText,
             progressPercent: percent !== null ? percent : 0,
+            isDownloading: true,
           });
         }
 
@@ -9755,14 +9785,15 @@
           progressPercent: 100,
           showToggle: false,
           showProgress: true,
+          isDownloading: false,
         });
         showToast('Download berhasil, check folder unduhan Anda.');
       } catch (error) {
         if (error.name === 'AbortError' || error.message === 'cancelled') {
-          updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true });
+          updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
         } else {
           console.error('Download error:', error);
-          updateDownloadCard({ message: 'Gagal download: ' + (error.message || 'Coba lagi'), messageType: 'error', progressText: 'Error', progressPercent: 0, showToggle: false, showProgress: true });
+          updateDownloadCard({ message: 'Gagal download: ' + (error.message || 'Coba lagi'), messageType: 'error', progressText: 'Error', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
           msg('Gagal download: ' + (error.message || 'Coba lagi'));
         }
       } finally {
