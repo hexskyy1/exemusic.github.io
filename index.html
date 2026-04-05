@@ -2093,11 +2093,41 @@
     .download-card-message.error { color: #ff8c8c; }
     .download-card-progress { display: flex; flex-direction: column; gap: 8px; }
     .download-card-progress-bar { width: 100%; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
-    .download-card-progress-bar #downloadProgressFill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s ease; box-shadow: 0 0 10px rgba(0,255,136,0.4); }
-    .download-card-progress-bar #downloadProgressFill.downloading { animation: progressPulse 2s ease-in-out infinite; }
+    .download-card-progress-bar #downloadProgressFill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: inherit;
+      position: relative;
+      overflow: hidden;
+    }
+    .download-card-progress-bar #downloadProgressFill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: progressShimmer 2s infinite;
+    }
+    .download-card-progress-bar #downloadProgressFill.downloading {
+      animation: progressPulse 2s ease-in-out infinite;
+    }
+    @keyframes progressShimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
     @keyframes progressPulse {
-      0%, 100% { box-shadow: 0 0 10px rgba(0,255,136,0.4); }
-      50% { box-shadow: 0 0 20px rgba(0,255,136,0.8), 0 0 30px rgba(0,212,255,0.3); }
+      0%, 100% {
+        box-shadow: 0 0 5px rgba(0,255,136,0.3);
+        filter: brightness(1);
+      }
+      50% {
+        box-shadow: 0 0 15px rgba(0,255,136,0.6), 0 0 25px rgba(0,212,255,0.3);
+        filter: brightness(1.1);
+      }
     }
     .download-card-progress-text { font-size: 12px; text-align: right; color: #fff; letter-spacing: 0.4px; font-family: 'JetBrains Mono', monospace; }
     .download-card-actions { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -9596,11 +9626,17 @@
     let downloadAbortController = null;
     let downloadPaused = false;
     let downloadPauseResolver = null;
-    let downloadReader = null;
+    let downloadRequest = null;
     let downloadChunks = [];
     let currentDownloadUrl = '';
     let currentDownloadName = '';
     let isTop4TopDownload = false;
+    let downloadStartTime = 0;
+    let downloadSpeed = 0;
+    let lastReceivedLength = 0;
+    let lastSpeedUpdate = 0;
+    let downloadedBytes = 0; // Track total downloaded bytes for resume
+    let downloadedBlob = null; // Store downloaded blob for resume
 
     function formatBytes(bytes) {
       if (!bytes || bytes < 0) return 'unknown';
@@ -9614,7 +9650,19 @@
       return value.toFixed(1) + ' ' + units[index];
     }
 
-    function updateDownloadCard({ detail, size, filename, message, messageType, progressText, progressPercent, showGoto, showToggle, showProgress, isDownloading = false }) {
+    function formatSpeed(bytesPerSecond) {
+      if (!bytesPerSecond || bytesPerSecond < 0) return '';
+      const units = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+      let index = 0;
+      let value = bytesPerSecond;
+      while (value >= 1024 && index < units.length - 1) {
+        value /= 1024;
+        index++;
+      }
+      return value.toFixed(1) + ' ' + units[index];
+    }
+
+    function updateDownloadCard({ detail, size, filename, message, messageType, progressText, progressPercent, showGoto, showToggle, showProgress, isDownloading = false, speed = '' }) {
       const modal = document.getElementById('modalDownload');
       const detailLabel = document.getElementById('downloadDetailLabel');
       const sizeLabel = document.getElementById('downloadSize');
@@ -9631,20 +9679,29 @@
       if (sizeLabel) sizeLabel.textContent = size || 'none';
       if (fileLabel) fileLabel.textContent = filename || 'none';
       if (msgEl) {
-        msgEl.textContent = message || '';
+        let displayMessage = message || '';
+        if (speed && isDownloading) {
+          displayMessage += ` (${speed})`;
+        }
+        msgEl.textContent = displayMessage;
         msgEl.className = 'download-card-message' + (messageType ? ' ' + messageType : '');
       }
       if (progressSection) progressSection.style.display = showProgress ? 'flex' : 'none';
-      if (fillEl && typeof progressPercent === 'number') fillEl.style.width = `${progressPercent}%`;
+      if (fillEl && typeof progressPercent === 'number') {
+        fillEl.style.width = `${Math.min(100, Math.max(0, progressPercent))}%`;
+      }
       if (fillEl) {
-        if (isDownloading) {
+        if (isDownloading && !downloadPaused) {
           fillEl.classList.add('downloading');
         } else {
           fillEl.classList.remove('downloading');
         }
       }
       if (textEl) textEl.textContent = progressText || '';
-      if (toggleBtn) toggleBtn.style.display = showToggle ? 'inline-flex' : 'none';
+      if (toggleBtn) {
+        toggleBtn.style.display = showToggle ? 'inline-flex' : 'none';
+        toggleBtn.textContent = downloadPaused ? 'Resume' : 'Pause';
+      }
       if (gotoBtn) gotoBtn.style.display = showGoto ? 'inline-flex' : 'none';
     }
 
@@ -9656,6 +9713,9 @@
     }
 
     function cancelDownload(hide = true) {
+      if (downloadRequest) {
+        downloadRequest.abort();
+      }
       if (downloadAbortController) {
         downloadAbortController.abort();
       }
@@ -9664,23 +9724,57 @@
         downloadPauseResolver = null;
       }
       downloadPaused = false;
+      downloadedBytes = 0; // Reset downloaded bytes on cancel
+      downloadedBlob = null; // Reset downloaded blob on cancel
       const toggleBtn = document.getElementById('downloadToggleBtn');
       if (toggleBtn) toggleBtn.textContent = 'Pause';
       if (hide) {
-        updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
+        updateDownloadCard({
+          message: 'Download dibatalkan',
+          messageType: 'error',
+          progressText: '0%',
+          progressPercent: 0,
+          showToggle: false,
+          showProgress: true,
+          isDownloading: false
+        });
         hideDownloadCard(2200);
       }
     }
 
     function toggleDownloadPause() {
-      if (!downloadReader || !downloadAbortController) return;
+      if (!downloadRequest) return;
+
       downloadPaused = !downloadPaused;
-      const toggleBtn = document.getElementById('downloadToggleBtn');
-      if (toggleBtn) toggleBtn.textContent = downloadPaused ? 'Resume' : 'Pause';
-      updateDownloadCard({ message: downloadPaused ? 'Download dijeda' : 'Melanjutkan download...', messageType: 'info', progressText: document.getElementById('downloadProgressText')?.textContent, progressPercent: null, showToggle: true, showProgress: true, isDownloading: !downloadPaused });
-      if (!downloadPaused && downloadPauseResolver) {
-        downloadPauseResolver();
-        downloadPauseResolver = null;
+
+      if (downloadPaused) {
+        // Pause download
+        if (downloadRequest) {
+          downloadRequest.abort();
+          downloadRequest = null;
+        }
+        updateDownloadCard({
+          message: 'Download dijeda',
+          messageType: 'info',
+          progressText: document.getElementById('downloadProgressText')?.textContent || '0%',
+          progressPercent: null,
+          showToggle: true,
+          showProgress: true,
+          isDownloading: false
+        });
+      } else {
+        // Resume download - restart from current progress
+        updateDownloadCard({
+          message: 'Melanjutkan download...',
+          messageType: 'info',
+          progressText: document.getElementById('downloadProgressText')?.textContent || '0%',
+          progressPercent: null,
+          showToggle: true,
+          showProgress: true,
+          isDownloading: true
+        });
+        // Resume download with current state
+        downloadSong(currentDownloadUrl, currentDownloadName, true);
       }
     }
 
@@ -9695,16 +9789,20 @@
       document.getElementById('modalDownload').style.display = 'flex';
     }
 
-    async function downloadSong() {
-      const url = songs[i]?.url;
+    async function downloadSong(resume = false) {
+      const url = resume ? currentDownloadUrl : songs[i]?.url;
       if (!url) { msg('URL lagu tidak tersedia'); return; }
 
-      cancelDownload(false);
-      currentDownloadUrl = url;
-      currentDownloadName = (songs[i]?.title || 'download').replace(/[\\/:*?"<>|]/g, '_');
-      isTop4TopDownload = url.includes('top4top.io') || url.includes('top4top.net') || url.includes('top4top.com');
+      if (!resume) {
+        cancelDownload(false);
+        currentDownloadUrl = url;
+        currentDownloadName = (songs[i]?.title || 'download').replace(/[\\/:*?"<>|]/g, '_');
+        isTop4TopDownload = url.includes('top4top.io') || url.includes('top4top.net') || url.includes('top4top.com');
+        downloadedBytes = 0;
+        downloadedBlob = null;
+      }
 
-      if (isTop4TopDownload) {
+      if (!resume && isTop4TopDownload) {
         updateDownloadCard({
           detail: 'Top4Top detected',
           size: 'none',
@@ -9720,65 +9818,117 @@
         return;
       }
 
-      updateDownloadCard({
-        detail: 'Downloading',
-        size: 'Menunggu...',
-        filename: currentDownloadName + '.mp3',
-        message: '',
-        messageType: 'info',
-        progressText: '0%',
-        progressPercent: 0,
-        showGoto: false,
-        showToggle: true,
-        showProgress: true,
-      });
+      if (!resume) {
+        updateDownloadCard({
+          detail: 'Downloading',
+          size: 'Menunggu...',
+          filename: currentDownloadName + '.mp3',
+          message: 'Menyiapkan download...',
+          messageType: 'info',
+          progressText: '0%',
+          progressPercent: 0,
+          showGoto: false,
+          showToggle: true,
+          showProgress: true,
+          isDownloading: true,
+        });
+      } else {
+        updateDownloadCard({
+          message: 'Melanjutkan download...',
+          messageType: 'info',
+          progressText: document.getElementById('downloadProgressText')?.textContent || '0%',
+          progressPercent: null,
+          showToggle: true,
+          showProgress: true,
+          isDownloading: true
+        });
+      }
 
-      downloadAbortController = new AbortController();
-      downloadPaused = false;
-      downloadChunks = [];
-      downloadReader = null;
-      let totalBytes = null;
-      let receivedLength = 0;
+      downloadStartTime = Date.now();
+      downloadSpeed = 0;
+      lastReceivedLength = downloadedBytes;
+      lastSpeedUpdate = Date.now();
 
       try {
-        const response = await fetch(url, { signal: downloadAbortController.signal });
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+        // Use XMLHttpRequest for better progress tracking with resume capability
+        downloadRequest = new XMLHttpRequest();
 
-        const contentLength = response.headers.get('content-length');
-        totalBytes = contentLength ? parseInt(contentLength, 10) : null;
-        if (totalBytes) {
-          updateDownloadCard({ size: formatBytes(totalBytes) });
-        } else {
-          updateDownloadCard({ size: 'unknown' });
-        }
+        const downloadPromise = new Promise((resolve, reject) => {
+          downloadRequest.open('GET', url, true);
+          downloadRequest.responseType = 'blob';
 
-        downloadReader = response.body.getReader();
-        while (true) {
-          const { done, value } = await downloadReader.read();
-          if (done) break;
-          if (downloadAbortController.signal.aborted) throw new Error('cancelled');
-
-          if (downloadPaused) {
-            await new Promise(resolve => { downloadPauseResolver = resolve; });
+          // Set range header for resume if we have downloaded bytes
+          if (downloadedBytes > 0) {
+            downloadRequest.setRequestHeader('Range', `bytes=${downloadedBytes}-`);
           }
 
-          downloadChunks.push(value);
-          receivedLength += value.length;
-          const percent = totalBytes ? Math.round((receivedLength / totalBytes) * 100) : null;
-          const downloadedText = formatBytes(receivedLength);
-          const progressText = percent !== null ? `${percent}%` : downloadedText;
-          const progressMessage = percent !== null ? `Downloading ${percent}%` : `Downloading ${downloadedText}`;
+          downloadRequest.onprogress = (event) => {
+            if (event.lengthComputable && !downloadPaused) {
+              const totalBytes = downloadedBytes + event.total;
+              const loadedBytes = downloadedBytes + event.loaded;
+              const percent = Math.round((loadedBytes / totalBytes) * 100);
+              const now = Date.now();
+              const timeDiff = (now - lastSpeedUpdate) / 1000;
 
-          updateDownloadCard({
-            message: progressMessage,
-            messageType: 'info',
-            progressText,
-            progressPercent: percent !== null ? percent : 0,
-            isDownloading: true,
-          });
-        }
+              if (timeDiff >= 0.5) {
+                const bytesDiff = (downloadedBytes + event.loaded) - lastReceivedLength;
+                downloadSpeed = bytesDiff / timeDiff;
+                lastReceivedLength = downloadedBytes + event.loaded;
+                lastSpeedUpdate = now;
+              }
 
-        const blob = new Blob(downloadChunks, { type: 'audio/mpeg' });
+              // Store partial blob for resume capability
+              if (event.loaded > 0 && downloadRequest.response) {
+                downloadedBlob = downloadRequest.response.slice(0, event.loaded);
+              }
+
+              updateDownloadCard({
+                size: formatBytes(totalBytes),
+                message: `Downloading ${percent}%`,
+                messageType: 'info',
+                progressText: `${percent}%`,
+                progressPercent: percent,
+                showToggle: true,
+                showProgress: true,
+                isDownloading: true,
+                speed: formatSpeed(downloadSpeed),
+              });
+            }
+          };
+
+          downloadRequest.onload = () => {
+            if (downloadRequest.status === 200 || downloadRequest.status === 206) {
+              // For resume, combine previous chunks with new response
+              if (downloadedBytes > 0 && downloadedBlob) {
+                // Combine existing blob with new response
+                const newBlob = downloadRequest.response;
+                const combinedBlob = new Blob([downloadedBlob, newBlob], { type: newBlob.type });
+                resolve(combinedBlob);
+              } else {
+                resolve(downloadRequest.response);
+              }
+            } else {
+              reject(new Error(`HTTP ${downloadRequest.status}`));
+            }
+          };
+
+          downloadRequest.onerror = () => {
+            reject(new Error('Network error'));
+          };
+
+          downloadRequest.onabort = () => {
+            reject(new Error('cancelled'));
+          };
+
+          downloadRequest.send();
+        });
+
+        const blob = await downloadPromise;
+
+        // Update downloaded bytes
+        downloadedBytes += blob.size;
+
+        // Create download link
         const objectUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objectUrl;
@@ -9788,6 +9938,9 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(objectUrl);
 
+        const elapsed = (Date.now() - downloadStartTime) / 1000;
+        const avgSpeed = downloadedBytes / elapsed;
+
         updateDownloadCard({
           message: 'Selesai! File berhasil didownload.',
           messageType: 'info',
@@ -9796,22 +9949,49 @@
           showToggle: false,
           showProgress: true,
           isDownloading: false,
+          speed: formatSpeed(avgSpeed),
         });
         showToast('Download berhasil, check folder unduhan Anda.');
+
+        // Reset downloaded bytes and blob for next download
+        downloadedBytes = 0;
+        downloadedBlob = null;
       } catch (error) {
-        if (error.name === 'AbortError' || error.message === 'cancelled') {
-          updateDownloadCard({ message: 'Download dibatalkan', messageType: 'error', progressText: '0%', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
+        if (error.message === 'cancelled') {
+          // Don't reset downloadedBytes on cancel so we can resume
+          updateDownloadCard({
+            message: downloadPaused ? 'Download dijeda' : 'Download dibatalkan',
+            messageType: 'error',
+            progressText: document.getElementById('downloadProgressText')?.textContent || '0%',
+            progressPercent: null,
+            showToggle: downloadPaused,
+            showProgress: true,
+            isDownloading: false
+          });
         } else {
           console.error('Download error:', error);
-          updateDownloadCard({ message: 'Gagal download: ' + (error.message || 'Coba lagi'), messageType: 'error', progressText: 'Error', progressPercent: 0, showToggle: false, showProgress: true, isDownloading: false });
+          updateDownloadCard({
+            message: 'Gagal download: ' + (error.message || 'Coba lagi'),
+            messageType: 'error',
+            progressText: 'Error',
+            progressPercent: 0,
+            showToggle: false,
+            showProgress: true,
+            isDownloading: false
+          });
           msg('Gagal download: ' + (error.message || 'Coba lagi'));
+          if (!resume) {
+            downloadedBytes = 0; // Reset on error only for new downloads
+            downloadedBlob = null;
+          }
         }
       } finally {
+        downloadRequest = null;
         downloadAbortController = null;
-        downloadReader = null;
         downloadPauseResolver = null;
-        if (!isTop4TopDownload) {
+        if (!isTop4TopDownload && !downloadPaused) {
           hideDownloadCard(3200);
+          downloadedBytes = 0;
         }
       }
     }
