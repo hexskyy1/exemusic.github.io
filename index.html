@@ -6884,15 +6884,10 @@
     }
 
     function openLeaderboard(defaultCategory = 'followers') {
-      console.log('openLeaderboard called with category:', defaultCategory);
-      console.log('auth.currentUser:', auth.currentUser);
-      console.log('userData:', userData);
-      
       const eventModal = document.getElementById('modalEventCenter');
       const lbModal = document.getElementById('modalLeaderboard');
       
       if (!auth.currentUser) {
-        console.log('No auth.currentUser, showing login message');
         msg('Login dulu untuk akses leaderboard');
         return;
       }
@@ -6900,7 +6895,6 @@
         console.warn('Leaderboard dibuka sebelum userData selesai dimuat. Proses tetap dilanjutkan.');
       }
 
-      console.log('Opening leaderboard modal...');
       // store URL before leaderboard
       if (!lastNonLeaderboardUrl) {
         lastNonLeaderboardUrl = window.location.href;
@@ -6909,7 +6903,6 @@
       // Close event center, open leaderboard
       if (eventModal) eventModal.style.display = 'none';
       if (lbModal) {
-        console.log('Setting leaderboard modal to visible');
         lbModal.style.display = 'flex';
         lbModal.style.alignItems = 'center';
         lbModal.style.justifyContent = 'center';
@@ -7176,18 +7169,17 @@
       }
     }
 
-    // Close leaderboard when modal closes
-    document.addEventListener('DOMContentLoaded', () => {
-      const lbModal = document.getElementById('modalLeaderboard');
-      if (lbModal) {
-        lbModal.addEventListener('click', (e) => {
-          if (e.target === lbModal) {
-            if (leaderboardRefreshInterval) {
-              clearInterval(leaderboardRefreshInterval);
-              leaderboardRefreshInterval = null;
-            }
-          }
-        });
+    // Handle browser back/forward navigation for leaderboard
+    window.addEventListener('popstate', (event) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isLeaderboard = urlParams.get('leaderboard');
+      const leaderboardCategory = window.location.hash.substring(1) || 'followers';
+
+      if (isLeaderboard && auth.currentUser) {
+        openLeaderboard(leaderboardCategory);
+      } else {
+        // Close leaderboard if navigating away
+        closeLeaderboard();
       }
     });
 
@@ -8778,8 +8770,15 @@
         const urlParams = new URLSearchParams(window.location.search);
         const songId = urlParams.get('id');
         const profileUid = urlParams.get('profile_userid');
+        const isLeaderboard = urlParams.get('leaderboard');
+        const leaderboardCategory = window.location.hash.substring(1) || 'followers';
 
-        if (profileUid && auth.currentUser) {
+        if (isLeaderboard && auth.currentUser) {
+          // Auto-open leaderboard if URL contains ?leaderboard
+          setTimeout(() => {
+            openLeaderboard(leaderboardCategory);
+          }, 1000); // Delay to ensure userData is loaded
+        } else if (profileUid && auth.currentUser) {
           if (profileUid === auth.currentUser.uid) openProfile();
           else openCreatorByUid(profileUid);
         } else if (audio.src === '') {
