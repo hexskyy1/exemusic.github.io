@@ -6526,6 +6526,7 @@
         stopHearts();
       }
       dismissLoader();
+      console.log('Loader dismissed');
       
       // Check if first time user - show tutorial
       if (u) {
@@ -6551,9 +6552,12 @@
       const lbModal = document.getElementById('modalLeaderboard');
       if (lbModal) lbModal.style.display = 'block';
       
-      loadLeaderboardData();
-      switchLeaderboardTab('followers', null);
-      startLeaderboardRefresh();
+      // Ensure we have user data before loading
+      setTimeout(() => {
+        loadLeaderboardData();
+        switchLeaderboardTab('followers', null);
+        startLeaderboardRefresh();
+      }, 500);
     }
 
     function switchLeaderboardTab(category, btn) {
@@ -6874,14 +6878,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const songId = urlParams.get('id');
         const profileUid = urlParams.get('profile_userid');
-        const isLeaderboard = urlParams.get('leaderboard');
-        const leaderboardCategory = window.location.hash.substring(1) || 'followers';
 
-        if (isLeaderboard && auth.currentUser) {
-          setTimeout(() => {
-            openLeaderboard();
-          }, 100);
-        } else if (profileUid && auth.currentUser) {
+        if (profileUid && auth.currentUser) {
           if (profileUid === auth.currentUser.uid) openProfile();
           else openCreatorByUid(profileUid);
         } else if (audio.src === '') {
