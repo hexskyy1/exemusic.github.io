@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ExeMusic - Verification</title>
   <link rel="icon" type="image/png" href="exemusicicon.png">
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -206,7 +206,7 @@
       margin-bottom: 4px;
     }
 
-    /* Turnstile container */
+    /* reCAPTCHA container */
     .gate-captcha-wrapper {
       display: flex;
       justify-content: center;
@@ -216,12 +216,12 @@
       border: 1px solid rgba(255,255,255,0.03);
     }
 
-    #turnstile-container {
+    #recaptcha-container {
       transform: scale(0.95);
       transform-origin: center;
     }
 
-    .cf-turnstile {
+    .g-recaptcha {
       display: flex;
       justify-content: center;
     }
@@ -310,7 +310,7 @@
         font-size: 11px;
       }
 
-      #turnstile-container {
+      #recaptcha-container {
         transform: scale(0.85);
       }
     }
@@ -334,7 +334,7 @@
         gap: 16px;
       }
 
-      #turnstile-container {
+      #recaptcha-container {
         transform: scale(0.75);
       }
     }
@@ -416,15 +416,15 @@
           </div>
         </div>
 
-        <!-- Captcha container -->
+        <!-- reCAPTCHA container -->
         <div class="gate-captcha-wrapper">
-          <div id="turnstile-container">
-            <!-- Cloudflare Turnstile will be rendered here -->
+          <div id="recaptcha-container">
+            <!-- Google reCAPTCHA v3 will be rendered here -->
           </div>
         </div>
 
         <!-- Status messages -->
-        <div class="gate-status" id="gateStatus">Mohon verifikasi Anda melalui Turnstile...</div>
+        <div class="gate-status" id="gateStatus">Mohon verifikasi Anda melalui reCAPTCHA...</div>
         <div class="gate-loader" id="gateLoader"></div>
         <div class="gate-timer" id="gateTimer">Verifikasi berlaku selama 3 jam</div>
       </div>
@@ -436,8 +436,7 @@
     const VERIFICATION_KEY = 'exe_verified';
     const EXPIRY_KEY = 'exe_expiry';
     const VERIFICATION_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
-    // TEST SITEKEY - Replace dengan sitekey asli Anda dari Cloudflare Turnstile Dashboard
-    const TURNSTILE_SITE_KEY = '0x4AAAAAACvnkRRZBuZeaNYx5sUyupfZ8pE'; // Cloudflare test sitekey
+    const RECAPTCHA_SITE_KEY = '6LcGHLMsAAAAAKTJhZuNM0t_66UaGg85v4N8wFRn'; // Google reCAPTCHA v3
 
     // Check if already verified on page load
     window.addEventListener('load', () => {
@@ -453,25 +452,30 @@
         // Already verified and token still valid
         redirectToMain();
       } else {
-        // Initialize Turnstile
-        initializeTurnstile();
+        // Initialize reCAPTCHA
+        setTimeout(() => {
+          initializeRecaptcha();
+        }, 500);
       }
     }
 
-    function initializeTurnstile() {
-      if (window.turnstile) {
-        window.turnstile.render('#turnstile-container', {
-          sitekey: TURNSTILE_SITE_KEY,
+    function initializeRecaptcha() {
+      if (window.grecaptcha) {
+        window.grecaptcha.render('recaptcha-container', {
+          sitekey: RECAPTCHA_SITE_KEY,
           theme: 'dark',
-          callback: onTurnstileSuccess,
-          'error-callback': onTurnstileError,
-          'expired-callback': onTurnstileExpired,
-          'timeout-callback': onTurnstileTimeout,
+          size: 'normal',
+          callback: onRecaptchaSuccess,
+          'error-callback': onRecaptchaError,
+          'expired-callback': onRecaptchaExpired
         });
+      } else {
+        console.error('reCAPTCHA not loaded');
+        setStatus('reCAPTCHA gagal dimuat', 'error');
       }
     }
 
-    function onTurnstileSuccess(token) {
+    function onRecaptchaSuccess(token) {
       setStatus('Verifikasi berhasil! Mengalihkan...', 'success');
       saveVerification();
       setTimeout(() => {
@@ -479,28 +483,20 @@
       }, 1500);
     }
 
-    function onTurnstileError(error) {
-      console.error('Turnstile error:', error);
+    function onRecaptchaError(error) {
+      console.error('reCAPTCHA error:', error);
       setStatus('Terjadi kesalahan. Silakan coba lagi.', 'error');
-      // Reset Turnstile
-      if (window.turnstile) {
-        window.turnstile.reset('#turnstile-container');
+      // Reset reCAPTCHA
+      if (window.grecaptcha) {
+        window.grecaptcha.reset();
       }
     }
 
-    function onTurnstileExpired() {
-      console.warn('Turnstile expired');
+    function onRecaptchaExpired() {
+      console.warn('reCAPTCHA expired');
       setStatus('Verifikasi kedaluwarsa. Silakan coba lagi.', 'error');
-      if (window.turnstile) {
-        window.turnstile.reset('#turnstile-container');
-      }
-    }
-
-    function onTurnstileTimeout() {
-      console.warn('Turnstile timeout');
-      setStatus('Waktu habis. Silakan coba lagi.', 'error');
-      if (window.turnstile) {
-        window.turnstile.reset('#turnstile-container');
+      if (window.grecaptcha) {
+        window.grecaptcha.reset();
       }
     }
 
@@ -542,11 +538,11 @@
     setInterval(() => {
       const expiry = localStorage.getItem(EXPIRY_KEY);
       if (expiry && Date.now() > parseInt(expiry)) {
-        // Token expired, clear and show Turnstile again
+        // Token expired, clear and show reCAPTCHA again
         localStorage.removeItem(VERIFICATION_KEY);
         localStorage.removeItem(EXPIRY_KEY);
-        if (window.turnstile) {
-          window.turnstile.reset('#turnstile-container');
+        if (window.grecaptcha) {
+          window.grecaptcha.reset();
         }
         setStatus('Verifikasi kedaluwarsa. Silakan verifikasi ulang.', 'error');
       }
