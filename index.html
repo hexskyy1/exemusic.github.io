@@ -5464,7 +5464,7 @@
           <button class="mp-btn mp-btn-sec" onclick="openTagSelector()"><i class="fas fa-tag"></i> Tag</button>
           <button class="mp-btn mp-btn-sec" id="btnProfileMusic" style="display:none" onclick="toggleProfileMusicInput()"><i class="fas fa-music"></i> Music</button>
           <button class="mp-btn mp-btn-sec" onclick="shareProfile(auth.currentUser&&auth.currentUser.uid, userData&&userData.username)"><i class="fas fa-share"></i> Share</button>
-          <button class="mp-btn" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.2)" onclick="auth.signOut(); location.reload()"><i class="fas fa-sign-out-alt"></i></button>
+          <button class="mp-btn" style="background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.2)" onclick="clearExeLoginCookies(); auth.signOut(); location.reload()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
         <div id="profileMusicRow" style="width:100%; padding:0 18px 8px; display:none">
           <input id="profileMusicUrl" class="inp-dark" placeholder="Link MP3 khusus profil" style="border-radius:8px">
@@ -7888,6 +7888,7 @@
       if (!auth.currentUser) return;
       if (confirm('Yakin ingin logout?')) {
         auth.signOut().then(() => {
+          clearExeLoginCookies();
           localStorage.clear();
           location.reload();
         });
@@ -8389,6 +8390,27 @@
     // ============================================================
     // AUTH
     // ============================================================
+    function _exeCookieBase(maxAgeSec) {
+      var secure = location.protocol === 'https:' ? '; Secure' : '';
+      return '; Path=/; SameSite=Lax; Max-Age=' + String(maxAgeSec) + secure;
+    }
+    function setExeLoginCookies(uid, username) {
+      try {
+        var base = _exeCookieBase(60 * 60 * 24 * 90);
+        document.cookie = 'exe_logged_in=1' + base;
+        document.cookie = 'exe_uid=' + encodeURIComponent(uid || '') + base;
+        document.cookie = 'exe_username=' + encodeURIComponent(String(username || '')) + base;
+        document.cookie = 'exe_login_at=' + String(Date.now()) + base;
+      } catch (e) {}
+    }
+    function clearExeLoginCookies() {
+      try {
+        var base = _exeCookieBase(0);
+        ['exe_logged_in', 'exe_uid', 'exe_username', 'exe_login_at'].forEach(function (name) {
+          document.cookie = name + '=' + base;
+        });
+      } catch (e) {}
+    }
     auth.onAuthStateChanged(u => {
       if (u) {
         db.ref('users/' + u.uid).on('value', snap => {
@@ -8478,9 +8500,11 @@
             document.getElementById('btnCreatorPanel').classList.add('show');
           }
           updateFollowUI();
+          setExeLoginCookies(u.uid, userData.username || '');
         });
         setupTagDropWatcher();
       } else {
+        clearExeLoginCookies();
         stopUploadCooldownWatcher();
         if (tagDropInterval) {
           clearInterval(tagDropInterval);
